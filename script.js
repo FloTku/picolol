@@ -1,3 +1,5 @@
+alert("SCRIPT GITHUB OK");
+
 const params = new URLSearchParams(window.location.search);
 const playerData = params.get("data");
 let currentGameId = null;
@@ -504,13 +506,3 @@ function createGame() {
 
   alert("Code de la partie : " + gameId);
 }
-document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const playerData = params.get("data");
-
-  if (playerData) {
-    showPlayerView(playerData);
-  } else {
-    showHome();
-  }
-});
