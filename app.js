@@ -9,6 +9,17 @@ const roles = [
   { nom: "Le Sup Originel", objectif: "Avoir le plus d’assists." },
   { nom: "Le Roi des Trolls", objectif: "Faire tilt un mate." }
 ];
+function encode(obj) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+}
+
+function decode(str) {
+  return JSON.parse(decodeURIComponent(escape(atob(str))));
+}
+
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 /* ================= HOME ================= */
 function showHome() {
@@ -59,7 +70,29 @@ function startGame() {
     });
   }
 
-  let html = `<h2>🎭 Joueurs & rôles (vue hôte)</h2>`;
+  let html = `<h2>🔗 Liens des joueurs</h2>`;
+
+  joueurs.forEach(j => {
+    const payload = encode(j);
+    const url = `${window.location.origin}${window.location.pathname}?data=${payload}`;
+
+    html += `
+      <div class="card">
+        <strong>${j.name}</strong><br>
+        <input value="${url}" readonly style="width:100%">
+      </div>
+    `;
+  });
+
+  html += `<button id="hostView">🎮 Vue Hôte</button>`;
+
+  document.getElementById("game").innerHTML = html;
+
+  document.getElementById("hostView").addEventListener("click", showHostView);
+}
+
+function showHostView() {
+  let html = `<h2>🎮 Vue Hôte</h2>`;
 
   joueurs.forEach(j => {
     html += `
@@ -71,11 +104,21 @@ function startGame() {
     `;
   });
 
-  html += `<br><button id="backHome">⬅️ Retour</button>`;
-
+  html += `<button onclick="showHome()">⬅️ Retour</button>`;
   document.getElementById("game").innerHTML = html;
+}
+function showPlayerView(encoded) {
+  const joueur = decode(encoded);
 
-  document.getElementById("backHome").addEventListener("click", showHome);
+  document.getElementById("game").innerHTML = `
+    <h2>🎴 Ton rôle secret</h2>
+    <div class="card">
+      <strong>${joueur.name}</strong><br><br>
+      🎭 <strong>${joueur.role.nom}</strong><br>
+      🎯 ${joueur.role.objectif}
+    </div>
+    <p style="opacity:.7">🔒 Ne montre pas cet écran</p>
+  `;
 }
 
 
@@ -110,3 +153,11 @@ function testFirebase() {
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
 }
+document.addEventListener("DOMContentLoaded", () => {
+  const data = getParam("data");
+  if (data) {
+    showPlayerView(data);
+  } else {
+    showHome();
+  }
+});
