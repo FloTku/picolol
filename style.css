@@ -1,44 +1,12 @@
-
 body {
-  background: #111;
+  background: #0e0e0e;
   color: white;
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   text-align: center;
 }
 
 button {
   padding: 10px 20px;
-  margin: 10px;
+  margin-top: 10px;
   cursor: pointer;
-}
-
-h1, h2 {
-  color: #f0c36d;
-}
-
-.card {
-  background: #1c1c1c;
-  border: 1px solid #444;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 10px 0;
-}
-
-.card.success {
-  border-color: #2ecc71;
-}
-
-.card.fail {
-  border-color: #e74c3c;
-}
-
-button {
-  background: #2c2c2c;
-  color: white;
-  border: 1px solid #666;
-  border-radius: 6px;
-}
-
-button:hover {
-  background: #3a3a3a;
 }
