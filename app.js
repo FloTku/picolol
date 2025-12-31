@@ -90,36 +90,25 @@ function getParam(name) {
 
 /* ================= HOME ================= */
 function showHome() {
-  const gameDiv = document.getElementById("game");
+  document.getElementById("game").innerHTML = `
+    <h2>🎭 Picolol</h2>
 
-  gameDiv.innerHTML = `
-    <h1>🎭 Picolol</h1>
-
-    <label>Nombre de joueurs</label><br>
-    <input type="number" id="players" min="2" max="5" value="5">
-
-    <div id="nameInputs" style="margin-top:10px;"></div>
-
-    <br>
-    <button id="start">🎲 Générer les joueurs</button>
     <button id="createGame">🔥 Créer une partie</button>
-
-    <hr>
+    <br><br>
 
     <input id="joinCode" placeholder="Code de la partie">
     <button id="joinGame">➡️ Rejoindre</button>
   `;
 
-  // listeners (UNE SEULE FOIS)
-  document.getElementById("start").onclick = startGame;
   document.getElementById("createGame").onclick = createGame;
 
   document.getElementById("joinGame").onclick = () => {
-    const code = document.getElementById("joinCode").value.trim().toUpperCase();
-    if (!code) return;
+    const code = document.getElementById("joinCode").value.toUpperCase();
+    if (!code) return alert("Entre un code");
     currentGameId = code;
     listenGame(code);
   };
+
 
   // génération des champs de noms
   const playersInput = document.getElementById("players");
@@ -411,5 +400,83 @@ function listenGame(gameId) {
   });
 }
 function startGame() {
+ setPhase("roles");
 
+}
+function showRolesHost() {
+  document.getElementById("game").innerHTML = `
+    <h2>🎮 Vue Hôte</h2>
+    <p>Les joueurs consultent leur rôle</p>
+
+    <button onclick="setPhase('stats')">📊 Fin de partie</button>
+  `;
+}
+function setPhase(phase) {
+  if (!currentGameId) return;
+
+  db.ref("games/" + currentGameId + "/phase").set(phase);
+}
+function createGame() {
+  const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  currentGameId = gameId;
+
+  db.ref("games/" + gameId).set({
+    phase: "lobby",
+    createdAt: Date.now()
+  });
+
+  alert("🎮 Code de la partie : " + gameId);
+  listenGame(gameId);
+}
+function listenGame(gameId) {
+  db.ref("games/" + gameId).on("value", snap => {
+    const game = snap.val();
+    if (!game) return;
+
+    switch (game.phase) {
+      case "lobby":
+        showLobby();
+        break;
+
+      case "roles":
+        showRolesHost();
+        break;
+
+      case "stats":
+        revealStats();
+        break;
+
+      case "bonus":
+        applyBonusMalus();
+        break;
+    }
+  });
+}
+function showLobby() {
+  document.getElementById("game").innerHTML = `
+    <h2>🎮 Partie ${currentGameId}</h2>
+    <p>Phase : Lobby</p>
+
+    <button id="startGame">🎲 Générer les joueurs</button>
+  `;
+
+  document.getElementById("startGame").onclick = () => {
+    startGame();           // génère UNE FOIS
+    setPhase("roles");     // notifie TOUT LE MONDE
+  };
+}
+function startGame() {
+  joueurs = [];
+
+  for (let i = 1; i <= 5; i++) {
+    joueurs.push({
+      id: i,
+      name: "Joueur " + i
+    });
+  }
+
+  db.ref("games/" + currentGameId + "/players").set(joueurs);
+}
+function setPhase(phase) {
+  db.ref("games/" + currentGameId + "/phase").set(phase);
 }
