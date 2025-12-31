@@ -2,6 +2,18 @@
 console.log("🚀 APP.JS CHARGÉ (VERSION TEST)");
 
 let joueurs = [];
+const stats = [
+  "Kills",
+  "Deaths",
+  "Assists",
+  "Vision Score",
+  "Dégâts",
+  "Gold/min"
+];
+
+let statCible = null;
+
+
 const roles = [
   { nom: "Mister White", objectif: "Être accusé par la majorité." },
   { nom: "Super-Héro", objectif: "Avoir le plus de morts." },
@@ -103,9 +115,16 @@ function showHostView() {
       </div>
     `;
   });
+html += `
+  <button id="endGame">🏁 Fin de partie</button>
+`;
 
   html += `<button onclick="showHome()">⬅️ Retour</button>`;
   document.getElementById("game").innerHTML = html;
+  document
+  .getElementById("endGame")
+  .addEventListener("click", revealStats);
+
 }
 function showPlayerView(encoded) {
   const joueur = decode(encoded);
@@ -161,3 +180,63 @@ document.addEventListener("DOMContentLoaded", () => {
     showHome();
   }
 });
+function revealStats() {
+  statCible = stats[Math.floor(Math.random() * stats.length)];
+
+  let html = `<h2>📊 Stat cible : ${statCible}</h2>`;
+
+  joueurs.forEach(j => {
+    html += `
+      <div class="card">
+        <strong>${j.name}</strong><br>
+        <input
+          type="number"
+          id="stat-${j.id}"
+          placeholder="Valeur"
+        >
+      </div>
+    `;
+  });
+
+  html += `<button id="validateStats">Valider les stats</button>`;
+
+  document.getElementById("game").innerHTML = html;
+
+  document
+    .getElementById("validateStats")
+    .addEventListener("click", showResults);
+}
+function showResults() {
+  let html = `<h2>📊 Résultats — ${statCible}</h2>`;
+
+  for (let joueur of joueurs) {
+    const input = document.getElementById(`stat-${joueur.id}`);
+    if (!input || input.value === "") {
+      alert("Merci de remplir toutes les stats.");
+      return;
+    }
+    joueur.stat = Number(input.value);
+  }
+
+  joueurs.forEach(joueur => {
+    html += `
+      <div class="card">
+        <strong>${joueur.name}</strong><br>
+
+        <button onclick="setResult(${joueur.id}, true)">
+          ✅ Réussie
+        </button>
+        <button onclick="setResult(${joueur.id}, false)">
+          ❌ Ratée
+        </button>
+      </div>
+    `;
+  });
+
+  document.getElementById("game").innerHTML = html;
+}
+function setResult(id, success) {
+  const joueur = joueurs.find(j => j.id === id);
+  joueur.success = success;
+  console.log(joueur.name, success ? "RÉUSSIE" : "RATÉE");
+}
