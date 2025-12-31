@@ -1,6 +1,6 @@
-let currentGameId = null;
 const params = new URLSearchParams(window.location.search);
 const playerData = params.get("data");
+let currentGameId = null;
 
 if (playerData) {
   showPlayerView(playerData);
@@ -135,6 +135,9 @@ function showHome() {
         </div>
       `;
     });
+html += `
+  <button id="createGameBtn">🔥 Créer une partie</button>
+`;
 
     html += `
       <button id="clearEffects">
@@ -142,8 +145,7 @@ function showHome() {
       </button>
       <hr>
     `;
-  }
-<button id="createGameBtn">🔥 Créer une partie</button>
+    }
 
   // 👥 Choix du nombre de joueurs
   html += `
@@ -156,7 +158,7 @@ function showHome() {
   `;
 
   // ⬇️ Injection HTML
-  document.getElementById("game").innerHTML = html;
+   document.getElementById("game").innerHTML = html;
 document
   .getElementById("createGameBtn")
   .addEventListener("click", createGame);
