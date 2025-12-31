@@ -449,6 +449,11 @@ function listenGame(gameId) {
   db.ref("games/" + gameId).on("value", snap => {
     const game = snap.val();
     if (!game) return;
+      if (isHost) {
+  showHostView(game);
+} else {
+  showPlayerView(game);
+}
 
     switch (game.phase) {
       case "lobby":
@@ -466,6 +471,7 @@ function listenGame(gameId) {
       case "bonus":
         applyBonusMalus();
         break;
+        
     }
   });
 }
