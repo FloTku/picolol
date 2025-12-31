@@ -1,5 +1,11 @@
 
-console.log("🚀 APP.JS CHARGÉ (VERSION TEST)");
+document.addEventListener("DOMContentLoaded", () => {
+  showHome();
+});
+
+
+document.addEventListener("DOMContentLoaded", showHome);
+
 
 let joueurs = [];
 
@@ -84,13 +90,14 @@ function getParam(name) {
 
 /* ================= HOME ================= */
 function showHome() {
-  const game = document.getElementById("game");
+  const gameDiv = document.getElementById("game");
 
-  game.innerHTML = `
-    <h2>🎭 Picolol</h2>
+  gameDiv.innerHTML = `
+    <h1>🎭 Picolol</h1>
 
     <label>Nombre de joueurs</label><br>
     <input type="number" id="players" min="2" max="5" value="5">
+
     <div id="nameInputs" style="margin-top:10px;"></div>
 
     <br>
@@ -103,54 +110,40 @@ function showHome() {
     <button id="joinGame">➡️ Rejoindre</button>
   `;
 
-  // ⬇️ LISTENERS APRÈS injection HTML (OBLIGATOIRE)
-  document.getElementById("start").addEventListener("click", startGame);
-  document.getElementById("createGame").addEventListener("click", createGame);
+  // listeners (UNE SEULE FOIS)
+  document.getElementById("start").onclick = startGame;
+  document.getElementById("createGame").onclick = createGame;
 
-  document.getElementById("joinGame").addEventListener("click", () => {
-    const code = document.getElementById("joinCode").value.toUpperCase();
-    if (!code) return alert("Entre un code");
+  document.getElementById("joinGame").onclick = () => {
+    const code = document.getElementById("joinCode").value.trim().toUpperCase();
+    if (!code) return;
     currentGameId = code;
     listenGame(code);
-  });
-}
+  };
 
+  // génération des champs de noms
+  const playersInput = document.getElementById("players");
+  const namesDiv = document.getElementById("nameInputs");
 
-/* ================= GAME ================= */
-function startGame() {
-  const nb = Number(document.getElementById("players").value);
-  joueurs = [];
-
-  const rolesMelanges = shuffle([...roles]);
-
-  for (let i = 1; i <= nb; i++) {
-    joueurs.push({
-      id: i,
-      name: `Joueur ${i}`,
-      role: rolesMelanges[i - 1]
-    });
+  function updateNameInputs() {
+    namesDiv.innerHTML = "";
+    for (let i = 1; i <= playersInput.value; i++) {
+      namesDiv.innerHTML += `
+        <input
+          type="text"
+          id="name-${i}"
+          placeholder="Nom du joueur ${i}"
+          style="display:block; margin:5px 0;"
+        >
+      `;
+    }
   }
 
-  let html = `<h2>🔗 Liens des joueurs</h2>`;
-
-  joueurs.forEach(j => {
-    const payload = encode(j);
-    const url = `${window.location.origin}${window.location.pathname}?data=${payload}`;
-
-    html += `
-      <div class="card">
-        <strong>${j.name}</strong><br>
-        <input value="${url}" readonly style="width:100%">
-      </div>
-    `;
-  });
-
-  html += `<button id="hostView">🎮 Vue Hôte</button>`;
-
-  document.getElementById("game").innerHTML = html;
-
-  document.getElementById("hostView").addEventListener("click", showHostView);
+  playersInput.onchange = updateNameInputs;
+  updateNameInputs();
 }
+
+
 
 function showHostView() {
   let html = `<h2>🎮 Vue Hôte</h2>`;
@@ -216,7 +209,7 @@ function testFirebase() {
     ok: true,
     time: Date.now()
   });
-  alert("🔥 Firebase écrit !");
+
 }
 function shuffle(arr) {
   return arr.sort(() => Math.random() - 0.5);
@@ -359,7 +352,7 @@ function loadEffects() {
 }
 const saved = loadEffects();
 if (saved) {
-  html += `<h3>🎒 Effets actifs</h3>`;
+  let html = `<h3>🎒 Effets actifs</h3>`;
   saved.forEach(e => {
     html += `
       <div class="card fail">
@@ -383,4 +376,40 @@ function drawEffect(pool) {
       return effect;
     }
   }
+}
+let currentGameId = null;
+
+function createGame() {
+  const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  currentGameId = gameId;
+
+  db.ref("games/" + gameId).set({
+    phase: "lobby",
+    players: {},
+    createdAt: Date.now()
+  });
+
+  alert("🎮 Code de la partie : " + gameId);
+
+  listenGame(gameId);
+}
+function listenGame(gameId) {
+  db.ref("games/" + gameId).on("value", snapshot => {
+    const game = snapshot.val();
+
+    if (!game) {
+      alert("❌ Partie introuvable");
+      return;
+    }
+
+    console.log("🔥 GAME UPDATE", game);
+
+    document.getElementById("game").innerHTML = `
+      <h2>🎮 Partie ${gameId}</h2>
+      <p>Phase actuelle : <strong>${game.phase}</strong></p>
+    `;
+  });
+}
+function startGame() {
+
 }
