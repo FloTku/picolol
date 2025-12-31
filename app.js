@@ -355,6 +355,9 @@ let isHost = false;
 
 function createGame() {
   const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
+  localStorage.setItem("picolol_role", "host");
+localStorage.setItem("picolol_gameId", gameId);
+
   currentGameId = gameId;
   isHost = true;
 
@@ -571,12 +574,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 });
-function joinGame(gameId) {
-  currentGameId = gameId;
-  isHost = false;
-
-  listenGame(gameId);
-}
 function showHostView(game) {
   console.log("👑 Vue Hôte", game);
 
