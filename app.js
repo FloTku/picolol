@@ -1,9 +1,36 @@
+<<<<<<< HEAD
 alert("SCRIPT GITHUB OK");
+=======
+alert("APP.JS CHARGÉ");
+>>>>>>> daafc7b (fix: resolve conflicts and clean app.js)
 
 const params = new URLSearchParams(window.location.search);
 const playerData = params.get("data");
 let currentGameId = null;
 
+let joueurs = [];
+let statCible = null;
+
+function random(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+function encode(obj) {
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+}
+function decode(str) {
+  return JSON.parse(decodeURIComponent(escape(atob(str))));
+}
+
+window.addEventListener("DOMContentLoaded", () => {
+  if (playerData) {
+    showPlayerView(playerData);
+  } else {
+    showHome();
+  }
+});
 const stats = [
   "Kills",
   "Deaths",
@@ -60,59 +87,6 @@ const malusPool = [
   { text: "Ne peut pas back sauf si mort pendant 10 minutes", rarity: "🟠 Légendaire", weight: 5 },
   { text: "Ne peut pas toucher aux objectifs neutres pendant 15 minutes", rarity: "🟠 Légendaire", weight: 5 }
 ];
-function drawEffect(pool) {
-  const total = pool.reduce((sum, e) => sum + e.weight, 0);
-  let rand = Math.random() * total;
-
-  for (let effect of pool) {
-    rand -= effect.weight;
-    if (rand <= 0) return effect;
-  }
-}
-
-
-let statCible = null;
-
-function getParam(name) {
-  const params = new URLSearchParams(window.location.search);
-  return params.get(name);
-}
-function encode(obj) {
-  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
-}
-
-function decode(str) {
-  return JSON.parse(decodeURIComponent(escape(atob(str))));
-}
-
-const roles = [
-  { nom: "Mister White", objectif: "Être accusé par la majorité." },
-  { nom: "Super-Héro", objectif: "Avoir le plus de morts." },
-  { nom: "Le PGM", objectif: "Avoir le plus de dégâts." },
-  { nom: "Le Sup Originel", objectif: "Avoir le plus d’assists." },
-  { nom: "Le Roi des Trolls", objectif: "Faire tilt un mate." }
-];
-
-const champions = ["Ahri", "Yasuo", "Teemo", "Lux", "Garen"];
-const lanes = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
-
-let joueurs = [];
-
-function random(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function shuffle(arr) {
-  return arr.sort(() => Math.random() - 0.5);
-}
-
-window.addEventListener("DOMContentLoaded", () => {
-  if (getParam("data")) {
-    showPlayerView();
-  } else {
-    showHome();
-  }
-});
 
 
 function showHome() {
@@ -155,6 +129,12 @@ html += `
 
   // ⬇️ Injection HTML
    document.getElementById("game").innerHTML = html;
+<<<<<<< HEAD
+=======
+  document
+  .getElementById("start")
+  .addEventListener("click", startGame);
+>>>>>>> daafc7b (fix: resolve conflicts and clean app.js)
 document
   .getElementById("createGameBtn")
   .addEventListener("click", createGame);
@@ -266,6 +246,7 @@ html += `
     .addEventListener("click", launchHost);
 }
 
+<<<<<<< HEAD
 function launchHost() {
   const gameDiv = document.getElementById("game");
 
@@ -279,6 +260,8 @@ function launchHost() {
     .getElementById("endGame")
     .addEventListener("click", revealStats);
 }
+=======
+>>>>>>> daafc7b (fix: resolve conflicts and clean app.js)
 
 function showPlayerView() {
   const data = getParam("data");
