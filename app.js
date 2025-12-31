@@ -400,9 +400,23 @@ function listenGame(gameId) {
   });
 }
 function startGame() {
- setPhase("roles");
+  joueurs = [];
 
+  const rolesMix = shuffle([...roles]);
+
+  for (let i = 1; i <= 5; i++) {
+    joueurs.push({
+      id: i,
+      name: "Joueur " + i,
+      role: rolesMix[i - 1],
+      champion: random(champions),
+      lane: lanes[i - 1]
+    });
+  }
+
+  db.ref("games/" + currentGameId + "/players").set(joueurs);
 }
+
 function showRolesHost() {
   document.getElementById("game").innerHTML = `
     <h2>🎮 Vue Hôte</h2>
@@ -480,3 +494,38 @@ function startGame() {
 function setPhase(phase) {
   db.ref("games/" + currentGameId + "/phase").set(phase);
 }
+function showRolesHost() {
+  document.getElementById("game").innerHTML = `
+    <h2>🎭 Rôles distribués</h2>
+    <p>Les joueurs peuvent voir leur rôle.</p>
+    <button onclick="setPhase('stats')">➡️ Passer aux stats</button>
+  `;
+}
+function showPlayerRole(playerId) {
+  db.ref("games/" + currentGameId + "/players").once("value", snap => {
+    const players = snap.val();
+    const me = players.find(p => p.id === playerId);
+
+    document.getElementById("game").innerHTML = `
+      <h2>🎴 Ton rôle</h2>
+      <div class="card">
+        <strong>${me.name}</strong><br><br>
+        🎭 <b>${me.role.nom}</b><br>
+        🎯 ${me.role.objectif}<br><br>
+        🧙 ${me.champion}<br>
+        🛣️ ${me.lane}
+      </div>
+      <p style="opacity:.7">🔒 Secret jusqu’à la fin</p>
+    `;
+  });
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const params = new URLSearchParams(window.location.search);
+  const playerId = Number(params.get("player"));
+
+  if (playerId && currentGameId) {
+    showPlayerRole(playerId);
+  } else {
+    showHome();
+  }
+});
