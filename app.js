@@ -372,25 +372,32 @@ localStorage.setItem("picolol_gameId", gameId);
 }
 
 function listenGame(gameId) {
-  db.ref("games/" + gameId).on("value", snap => {
-    const game = snap.val();
+  db.ref("games/" + gameId).on("value", snapshot => {
+    const game = snapshot.val();
     if (!game) return;
 
-    if (isHost) {
-      renderHostView(game);
-    } else {
-      renderPlayerView(game);
+    console.log("🎮 Vue Host", game);
+
+    // 👑 VUE HÔTE — PHASE LOBBY
+    if (localStorage.getItem("picolol_role") === "host" && game.phase === "lobby") {
+      document.getElementById("game").innerHTML = `
+        <h2>🎮 Partie ${gameId}</h2>
+        <p>Phase actuelle : <strong>Lobby</strong></p>
+
+        <button id="distributeRoles">
+          🎴 Distribuer les rôles
+        </button>
+      `;
+
+      // ⚠️ IMPORTANT : le addEventListener DOIT être APRÈS le innerHTML
+      document
+        .getElementById("distributeRoles")
+        .addEventListener("click", () => distributeRoles(game));
     }
 
-
-    console.log("🔥 GAME UPDATE", game);
-
-    document.getElementById("game").innerHTML = `
-      <h2>🎮 Partie ${gameId}</h2>
-      <p>Phase actuelle : <strong>${game.phase}</strong></p>
-    `;
   });
 }
+
 function startGame() {
   joueurs = [];
 
@@ -598,4 +605,21 @@ function showPlayerView(game) {
     <p>En attente de l’hôte…</p>
     <p>Phase : <strong>${game.phase}</strong></p>
   `;
+}
+function distributeRoles(game) {
+  const playerIds = Object.keys(game.players);
+  const rolesMix = shuffle([...roles]);
+  const champsMix = shuffle([...champions]);
+  const lanesMix = shuffle([...lanes]);
+
+  playerIds.forEach((pid, i) => {
+    db.ref(`games/${currentGameId}/players/${pid}`).update({
+      role: rolesMix[i],
+      champion: champsMix[i],
+      lane: lanesMix[i],
+      revealed: true
+    });
+  });
+
+  db.ref(`games/${currentGameId}/phase`).set("roles");
 }
