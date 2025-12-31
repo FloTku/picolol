@@ -1,4 +1,4 @@
-console.log("✅ app.js chargé");
+
 
 let joueurs = [];
 
@@ -39,3 +39,28 @@ function startGame() {
 
 /* ================= BOOT ================= */
 document.addEventListener("DOMContentLoaded", showHome);
+console.log("🔥 app.js chargé");
+
+// 🔥 Firebase config (REMPLACE avec TES VALEURS)
+const firebaseConfig = {
+  apiKey: "AIzaSyD6JtqXHDk4TglDyNZ4iRPA8gYWi0uSjjM",
+  authDomain: "Tpicolol-d75f9.firebaseapp.com",
+  databaseURL: "https://picolol-d75f9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "picolol-d75f9",
+  storageBucket: "picolol-d75f9.firebasestorage.app",
+  messagingSenderId: "1046593597094",
+  appId: "1:1046593597094:web:6237edbf11813a3824ce67"
+};
+
+// Init Firebase
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+console.log("✅ Firebase initialisé");
+function testFirebase() {
+  db.ref("test").set({
+    ok: true,
+    time: Date.now()
+  });
+  alert("🔥 Firebase écrit !");
+}
