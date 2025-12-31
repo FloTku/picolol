@@ -1,10 +1,8 @@
-
-document.addEventListener("DOMContentLoaded", () => {
-  showHome();
-});
+console.log("✅ app.js exécuté");
 
 
-document.addEventListener("DOMContentLoaded", showHome);
+
+
 
 
 let joueurs = [];
@@ -89,74 +87,52 @@ function getParam(name) {
 }
 
 /* ================= HOME ================= */
+let homeRendered = false;
+
 function showHome() {
-  document.getElementById("game").innerHTML = `
+  console.log("🏠 showHome");
+
+  const gameDiv = document.getElementById("game");
+
+  gameDiv.innerHTML = `
     <h2>🎭 Picolol</h2>
 
-    <button id="createGame">🔥 Créer une partie</button>
+    <label>Nombre de joueurs</label><br>
+    <input type="number" id="players" min="2" max="5" value="5">
+
     <br><br>
+
+    <button id="start">🎲 Générer les joueurs</button>
+    <button id="createGame">🔥 Créer une partie</button>
+
+    <hr>
 
     <input id="joinCode" placeholder="Code de la partie">
     <button id="joinGame">➡️ Rejoindre</button>
   `;
 
-  document.getElementById("createGame").onclick = createGame;
-
-  document.getElementById("joinGame").onclick = () => {
-    const code = document.getElementById("joinCode").value.toUpperCase();
-    if (!code) return alert("Entre un code");
-    currentGameId = code;
-    listenGame(code);
-  };
-
-
-  // génération des champs de noms
-  const playersInput = document.getElementById("players");
-  const namesDiv = document.getElementById("nameInputs");
-
-  function updateNameInputs() {
-    namesDiv.innerHTML = "";
-    for (let i = 1; i <= playersInput.value; i++) {
-      namesDiv.innerHTML += `
-        <input
-          type="text"
-          id="name-${i}"
-          placeholder="Nom du joueur ${i}"
-          style="display:block; margin:5px 0;"
-        >
-      `;
-    }
-  }
-
-  playersInput.onchange = updateNameInputs;
-  updateNameInputs();
-}
-
-
-
-function showHostView() {
-  let html = `<h2>🎮 Vue Hôte</h2>`;
-
-  joueurs.forEach(j => {
-    html += `
-      <div class="card">
-        <strong>${j.name}</strong><br>
-        🎭 ${j.role.nom}<br>
-        🎯 ${j.role.objectif}
-      </div>
-    `;
+  // ⚠️ LES BOUTONS SONT BRANCHÉS APRÈS L’INJECTION HTML
+  document.getElementById("start").addEventListener("click", () => {
+    console.log("🎲 Click start");
+    startGame();
   });
-html += `
-  <button id="endGame">🏁 Fin de partie</button>
-`;
 
-  html += `<button onclick="showHome()">⬅️ Retour</button>`;
-  document.getElementById("game").innerHTML = html;
-  document
-  .getElementById("endGame")
-  .addEventListener("click", revealStats);
+  document.getElementById("createGame").addEventListener("click", () => {
+    console.log("🔥 Click createGame");
+    createGame();
+  });
 
+  document.getElementById("joinGame").addEventListener("click", () => {
+    const code = document.getElementById("joinCode").value.trim().toUpperCase();
+    if (!code) {
+      alert("Entre un code");
+      return;
+    }
+    console.log("➡️ Join game", code);
+    joinGame(code);
+  });
 }
+
 function showPlayerView(encoded) {
   const joueur = decode(encoded);
 
@@ -208,7 +184,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (data) {
     showPlayerView(data);
   } else {
-    showHome();
+   
   }
 });
 function revealStats() {
@@ -535,7 +511,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if (playerId && currentGameId) {
     showPlayerRole(playerId);
   } else {
-    showHome();
+   
   }
 });
 function createGame() {
@@ -573,3 +549,15 @@ function renderPlayerView(game) {
 function generateCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("🚀 DOM prêt");
+
+  const params = new URLSearchParams(window.location.search);
+  const playerData = params.get("data");
+
+  if (playerData) {
+    showPlayerView(playerData);
+  } else {
+
+  }
+});
