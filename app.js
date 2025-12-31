@@ -383,13 +383,16 @@ function createGame() {
   listenGame(gameId);
 }
 function listenGame(gameId) {
-  db.ref("games/" + gameId).on("value", snapshot => {
-    const game = snapshot.val();
+  db.ref("games/" + gameId).on("value", snap => {
+    const game = snap.val();
+    if (!game) return;
 
-    if (!game) {
-      alert("❌ Partie introuvable");
-      return;
+    if (isHost) {
+      renderHostView(game);
+    } else {
+      renderPlayerView(game);
     }
+
 
     console.log("🔥 GAME UPDATE", game);
 
@@ -529,3 +532,38 @@ document.addEventListener("DOMContentLoaded", () => {
     showHome();
   }
 });
+function createGame() {
+  isHost = true;
+
+  const gameId = generateCode();
+  currentGameId = gameId;
+
+  db.ref("games/" + gameId).set({
+    phase: "lobby",
+    players: {}
+  });
+
+  listenGame(gameId);
+}
+function joinGame(code, id) {
+  isHost = false;
+  playerId = id;
+
+  currentGameId = code;
+  listenGame(code);
+}
+function renderHostView(game) {
+  if (game.phase === "lobby") showLobbyHost();
+  if (game.phase === "roles") showRolesHost();
+  if (game.phase === "stats") showStatsHost();
+}
+function renderPlayerView(game) {
+  const me = game.players[playerId];
+
+  if (game.phase === "lobby") showWaiting();
+  if (game.phase === "roles") showMyRole(me);
+  if (game.phase === "stats") showStatsPlayer();
+}
+function generateCode() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
