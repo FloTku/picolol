@@ -577,3 +577,28 @@ function joinGame(gameId) {
 
   listenGame(gameId);
 }
+function showHostView(game) {
+  console.log("👑 Vue Hôte", game);
+
+  document.getElementById("game").innerHTML = `
+    <h2>👑 Hôte — Partie ${currentGameId}</h2>
+    <p>Phase actuelle : <strong>${game.phase}</strong></p>
+
+    <button id="startRoles">🎭 Distribuer les rôles</button>
+  `;
+
+  document
+    .getElementById("startRoles")
+    .addEventListener("click", () => {
+      db.ref("games/" + currentGameId + "/phase").set("roles");
+    });
+}
+function showPlayerView(game) {
+  console.log("🎮 Vue Joueur", game);
+
+  document.getElementById("game").innerHTML = `
+    <h2>🎮 Partie ${currentGameId}</h2>
+    <p>En attente de l’hôte…</p>
+    <p>Phase : <strong>${game.phase}</strong></p>
+  `;
+}
