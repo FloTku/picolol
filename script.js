@@ -1,3 +1,4 @@
+let currentGameId = null;
 const params = new URLSearchParams(window.location.search);
 const playerData = params.get("data");
 
@@ -142,6 +143,7 @@ function showHome() {
       <hr>
     `;
   }
+<button id="createGameBtn">🔥 Créer une partie</button>
 
   // 👥 Choix du nombre de joueurs
   html += `
@@ -155,6 +157,9 @@ function showHome() {
 
   // ⬇️ Injection HTML
   document.getElementById("game").innerHTML = html;
+document
+  .getElementById("createGameBtn")
+  .addEventListener("click", createGame);
 
   // 🔁 Génération dynamique des champs de noms
   const playersInput = document.getElementById("players");
@@ -355,7 +360,7 @@ function showResults() {
     `;
   });
 html += `
-  <button id="applyBM" style="margin-top:20px;">
+  <button id="applyBM" disabled>
     🎁 Appliquer bonus / malus
   </button>
 `;
@@ -373,6 +378,18 @@ html += `
   });
 
   document
+  .getElementById("applyBM")
+  .addEventListener("click", applyBonusMalus);
+function checkReady() {
+  const btn = document.getElementById("applyBM");
+  btn.disabled = !allResultsSet();
+}
+
+document.querySelectorAll(".successBtn, .failBtn").forEach(btn => {
+  btn.addEventListener("click", checkReady);
+});
+
+document
   .getElementById("applyBM")
   .addEventListener("click", applyBonusMalus);
 
@@ -477,4 +494,17 @@ function listenGame(gameId) {
 function setPhase(gameId, phase) {
   db.ref("games/" + gameId + "/phase").set(phase);
 }
-<button onclick="createGame()">🔥 Créer une partie (test)</button>
+function allResultsSet() {
+  return joueurs.every(j => typeof j.success === "boolean");
+}
+function createGame() {
+  const gameId = Math.random().toString(36).substring(2, 8);
+  currentGameId = gameId;
+
+  db.ref("games/" + gameId).set({
+    phase: "lobby",
+    createdAt: Date.now()
+  });
+
+  alert("Code de la partie : " + gameId);
+}
