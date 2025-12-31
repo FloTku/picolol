@@ -1,4 +1,22 @@
-console.log("✅ app.js exécuté");
+console.log("🔥 app.js chargé");
+
+// 🔥 Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyD6JtqXHDk4TglDyNZ4iRPA8gYWi0uSjjM",
+  authDomain: "picolol-d75f9.firebaseapp.com",
+  databaseURL: "https://picolol-d75f9-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "picolol-d75f9",
+  storageBucket: "picolol-d75f9.appspot.com",
+  messagingSenderId: "1046593597094",
+  appId: "1:1046593597094:web:6237edbf11813a3824ce67"
+};
+
+// ✅ Init Firebase (une seule fois)
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+console.log("✅ Firebase initialisé");
+
 
 
 
@@ -153,20 +171,8 @@ function showPlayerView(encoded) {
 document.addEventListener("DOMContentLoaded", showHome);
 console.log("🔥 app.js chargé");
 
-// 🔥 Firebase config (REMPLACE avec TES VALEURS)
-const firebaseConfig = {
-  apiKey: "AIzaSyD6JtqXHDk4TglDyNZ4iRPA8gYWi0uSjjM",
-  authDomain: "Tpicolol-d75f9.firebaseapp.com",
-  databaseURL: "https://picolol-d75f9-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "picolol-d75f9",
-  storageBucket: "picolol-d75f9.firebasestorage.app",
-  messagingSenderId: "1046593597094",
-  appId: "1:1046593597094:web:6237edbf11813a3824ce67"
-};
-
 // Init Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+
 
 console.log("✅ Firebase initialisé");
 function testFirebase() {
@@ -342,15 +348,18 @@ function drawEffect(pool) {
     }
   }
 }
+
+
 let currentGameId = null;
+let isHost = false;
 
 function createGame() {
   const gameId = Math.random().toString(36).substring(2, 8).toUpperCase();
   currentGameId = gameId;
+  isHost = true;
 
   db.ref("games/" + gameId).set({
     phase: "lobby",
-    players: {},
     createdAt: Date.now()
   });
 
@@ -358,6 +367,7 @@ function createGame() {
 
   listenGame(gameId);
 }
+
 function listenGame(gameId) {
   db.ref("games/" + gameId).on("value", snap => {
     const game = snap.val();
@@ -561,3 +571,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   }
 });
+function joinGame(gameId) {
+  currentGameId = gameId;
+  isHost = false;
+
+  listenGame(gameId);
+}
