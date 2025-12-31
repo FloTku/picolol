@@ -469,6 +469,24 @@ function listenGame(gameId) {
         break;
         
     }
+    const role = localStorage.getItem("picolol_role");
+const playerId = localStorage.getItem("picolol_playerId");
+
+if (role === "player" && game.phase === "roles") {
+  const me = game.players[playerId];
+  if (!me) return;
+
+  document.getElementById("game").innerHTML = `
+    <h2>🎭 Ton rôle</h2>
+    <div class="card">
+      <strong>${me.role.nom}</strong><br>
+      🎯 ${me.role.objectif}<br><br>
+      🧙 ${me.champion}<br>
+      🛣️ ${me.lane}
+    </div>
+  `;
+}
+
   });
 }
 function showLobby() {
