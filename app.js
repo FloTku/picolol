@@ -2,6 +2,7 @@
 console.log("🚀 APP.JS CHARGÉ (VERSION TEST)");
 
 let joueurs = [];
+
 const stats = [
   "Kills",
   "Deaths",
@@ -9,6 +10,54 @@ const stats = [
   "Vision Score",
   "Dégâts",
   "Gold/min"
+];
+const bonusPool = [
+  // ⚪ COMMUN
+  { text: "Peut ignorer UN call d’équipe sans reproche", rarity: "⚪ Commun", weight: 35 },
+  { text: "Peut forcer un allié à dire 'my bad' après un missplay", rarity: "⚪ Commun", weight: 35 },
+  { text: "Peut prendre un buff ennemi UNE fois si l’occasion se présente", rarity: "⚪ Commun", weight: 35 },
+
+  // 🔵 RARE
+  { text: "+1 reroll de champion (si random)", rarity: "🔵 Rare", weight: 20 },
+  { text: "Peut shotcaller pendant 10 minutes (les autres doivent écouter)", rarity: "🔵 Rare", weight: 20 },
+  { text: "Peut swap de rôle avec un allié AVANT le début de la game", rarity: "🔵 Rare", weight: 20 },
+  { text: "Peut décider du prochain objectif (même mauvais)", rarity: "🔵 Rare", weight: 20 },
+
+  // 🟣 ÉPIQUE
+  { text: "Devient shotcaller ABSOLU pendant 10 minutes", rarity: "🟣 Épique", weight: 10 },
+  { text: "Peut imposer un swap de lane à 10 minutes", rarity: "🟣 Épique", weight: 10 },
+  { text: "Peut voler le bonus d’un autre joueur", rarity: "🟣 Épique", weight: 10 },
+
+  // 🟠 LÉGENDAIRE
+  { text: "Peut choisir son champion ET sa lane pour la prochaine partie", rarity: "🟠 Légendaire", weight: 5 },
+  { text: "Peut annuler UN malus d’un autre joueur", rarity: "🟠 Légendaire", weight: 5 },
+  { text: "Peut annuler UN vote ou décision d’équipe", rarity: "🟠 Légendaire", weight: 5 }
+];
+
+const malusPool = [
+  // ⚪ COMMUN
+  { text: "Doit dire 'bien joué' après CHAQUE mort", rarity: "⚪ Commun", weight: 35 },
+  { text: "Doit annoncer chaque back à l’oral ou dans le chat", rarity: "⚪ Commun", weight: 35 },
+  { text: "Doit jouer prudemment : aucun engage volontaire pendant 5 minutes", rarity: "⚪ Commun", weight: 35 },
+  { text: "Doit jouer sans musique / sans son pendant 10 minutes", rarity: "⚪ Commun", weight: 35 },
+
+  // 🔵 RARE
+  { text: "Interdiction de back avant 5 minutes", rarity: "🔵 Rare", weight: 20 },
+  { text: "Interdiction d’utiliser les pings pendant 10 minutes", rarity: "🔵 Rare", weight: 20 },
+  { text: "Doit suivre un call d’équipe même s’il est discutable", rarity: "🔵 Rare", weight: 20 },
+  { text: "Ne peut pas toucher aux objectifs neutres pendant 10 minutes", rarity: "🔵 Rare", weight: 20 },
+
+  // 🟣 ÉPIQUE
+  { text: "Interdiction d’utiliser Flash pendant les 10 premières minutes", rarity: "🟣 Épique", weight: 10 },
+  { text: "Pas de ward pendant 10 minutes", rarity: "🟣 Épique", weight: 10 },
+  { text: "Doit donner son premier buff à un allié", rarity: "🟣 Épique", weight: 10 },
+  { text: "Interdiction d’utiliser UN sort de base choisi par l’équipe pendant 5 minutes", rarity: "🟣 Épique", weight: 10 },
+
+  // 🟠 LÉGENDAIRE
+  { text: "Doit changer de lane à 10 minutes (swap imposé)", rarity: "🟠 Légendaire", weight: 5 },
+  { text: "Interdiction totale de ward pendant 15 minutes", rarity: "🟠 Légendaire", weight: 5 },
+  { text: "Ne peut pas back sauf si mort pendant 10 minutes", rarity: "🟠 Légendaire", weight: 5 },
+  { text: "Ne peut pas toucher aux objectifs neutres pendant 15 minutes", rarity: "🟠 Légendaire", weight: 5 }
 ];
 
 let statCible = null;
@@ -209,34 +258,129 @@ function revealStats() {
 function showResults() {
   let html = `<h2>📊 Résultats — ${statCible}</h2>`;
 
-  for (let joueur of joueurs) {
-    const input = document.getElementById(`stat-${joueur.id}`);
-    if (!input || input.value === "") {
-      alert("Merci de remplir toutes les stats.");
-      return;
-    }
-    joueur.stat = Number(input.value);
-  }
-
   joueurs.forEach(joueur => {
     html += `
       <div class="card">
         <strong>${joueur.name}</strong><br>
 
-        <button onclick="setResult(${joueur.id}, true)">
+        <button class="successBtn" data-id="${joueur.id}">
           ✅ Réussie
         </button>
-        <button onclick="setResult(${joueur.id}, false)">
+        <button class="failBtn" data-id="${joueur.id}">
           ❌ Ratée
         </button>
       </div>
     `;
   });
 
+  // ✅ UN SEUL bouton global
+  html += `
+    <button id="applyBM" disabled>
+      🎁 Appliquer bonus / malus
+    </button>
+  `;
+
   document.getElementById("game").innerHTML = html;
+
+  // 🎯 Gestion des clics réussite / ratée
+  document.querySelectorAll(".successBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      setResult(Number(btn.dataset.id), true);
+      checkReady();
+    });
+  });
+
+  document.querySelectorAll(".failBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      setResult(Number(btn.dataset.id), false);
+      checkReady();
+    });
+  });
+
+  // 🎁 Bouton final
+  document
+    .getElementById("applyBM")
+    .addEventListener("click", applyBonusMalus);
 }
+
 function setResult(id, success) {
   const joueur = joueurs.find(j => j.id === id);
   joueur.success = success;
   console.log(joueur.name, success ? "RÉUSSIE" : "RATÉE");
+}
+function allResultsSet() {
+  return joueurs.every(j => typeof j.success === "boolean");
+}
+function applyBonusMalus() {
+  let html = `<h2>🎁 Bonus & Malus</h2>`;
+
+  joueurs.forEach(joueur => {
+    let effet;
+
+    if (joueur.success) {
+      effet = drawEffect(bonusPool);
+
+      html += `
+        <div class="card success">
+          <strong>${joueur.name}</strong><br>
+          ✅ ${effet.rarity} — ${effet.text}
+        </div>
+      `;
+    } else {
+      effet = drawEffect(malusPool);
+
+      html += `
+        <div class="card fail">
+          <strong>${joueur.name}</strong><br>
+          ❌ ${effet.rarity} — ${effet.text}
+        </div>
+      `;
+    }
+
+    joueur.effet = effet;
+  });
+
+  saveEffects();
+  document.getElementById("game").innerHTML = html;
+}
+
+function saveEffects() {
+  const data = joueurs.map(j => ({
+    id: j.id,
+    name: j.name,
+    effet: j.effet
+  }));
+
+  localStorage.setItem("picolol_effects", JSON.stringify(data));
+}
+function loadEffects() {
+  const data = localStorage.getItem("picolol_effects");
+  return data ? JSON.parse(data) : null;
+}
+const saved = loadEffects();
+if (saved) {
+  html += `<h3>🎒 Effets actifs</h3>`;
+  saved.forEach(e => {
+    html += `
+      <div class="card fail">
+        ${e.name} — ${e.effet.rarity} ${e.effet.text}
+      </div>
+    `;
+  });
+  html += `<hr>`;
+}
+function checkReady() {
+  const btn = document.getElementById("applyBM");
+  btn.disabled = !joueurs.every(j => typeof j.success === "boolean");
+}
+function drawEffect(pool) {
+  const totalWeight = pool.reduce((sum, e) => sum + e.weight, 0);
+  let rand = Math.random() * totalWeight;
+
+  for (const effect of pool) {
+    rand -= effect.weight;
+    if (rand <= 0) {
+      return effect;
+    }
+  }
 }
