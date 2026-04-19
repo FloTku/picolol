@@ -1109,19 +1109,33 @@ async function getRiotKey() {
   return riotApiKey;
 }
 
-// Appel générique à l'API Riot — clé en query param via allorigins
+// Appel générique à l'API Riot — plusieurs proxies en fallback
 async function riotCall(url) {
   const key = await getRiotKey();
   if (!key) throw new Error('Clé API Riot non configurée');
-  // On ajoute la clé directement dans l'URL (query param)
-  const separator = url.includes('?') ? '&' : '?';
+
+  const separator  = url.includes('?') ? '&' : '?';
   const urlWithKey = url + separator + 'api_key=' + encodeURIComponent(key);
-  const proxyUrl   = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(urlWithKey);
-  const res = await fetch(proxyUrl);
-  if (res.status === 404) throw { code: 404, message: 'Introuvable' };
-  if (res.status === 403) throw { code: 403, message: 'Clé API expirée ou invalide' };
-  if (!res.ok) throw { code: res.status, message: await res.text() };
-  return res.json();
+
+  // Liste de proxies CORS à essayer dans l'ordre
+  const proxies = [
+    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlWithKey)}`,
+    `https://thingproxy.freeboard.io/fetch/${urlWithKey}`,
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(urlWithKey)}`,
+  ];
+
+  for (const proxyUrl of proxies) {
+    try {
+      const res = await fetch(proxyUrl);
+      if (res.status === 404) throw { code: 404, message: 'Introuvable' };
+      if (res.status === 403) throw { code: 403, message: 'Clé API expirée ou invalide' };
+      if (res.ok) return res.json();
+    } catch (err) {
+      if (err.code) throw err; // erreur Riot — on ne réessaie pas
+      console.warn('Proxy échoué, tentative suivante...', proxyUrl);
+    }
+  }
+  throw new Error('Tous les proxies CORS ont échoué');
 }
 
 // Récupère le PUUID depuis un Riot ID (Pseudo#TAG)
