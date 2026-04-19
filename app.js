@@ -1109,33 +1109,19 @@ async function getRiotKey() {
   return riotApiKey;
 }
 
-// Appel générique à l'API Riot — plusieurs proxies en fallback
+// Appel générique à l'API Riot via corsproxy.io
 async function riotCall(url) {
   const key = await getRiotKey();
   if (!key) throw new Error('Clé API Riot non configurée');
-
   const separator  = url.includes('?') ? '&' : '?';
   const urlWithKey = url + separator + 'api_key=' + encodeURIComponent(key);
-
-  // Liste de proxies CORS à essayer dans l'ordre
-  const proxies = [
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(urlWithKey)}`,
-    `https://thingproxy.freeboard.io/fetch/${urlWithKey}`,
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(urlWithKey)}`,
-  ];
-
-  for (const proxyUrl of proxies) {
-    try {
-      const res = await fetch(proxyUrl);
-      if (res.status === 404) throw { code: 404, message: 'Introuvable' };
-      if (res.status === 403) throw { code: 403, message: 'Clé API expirée ou invalide' };
-      if (res.ok) return res.json();
-    } catch (err) {
-      if (err.code) throw err; // erreur Riot — on ne réessaie pas
-      console.warn('Proxy échoué, tentative suivante...', proxyUrl);
-    }
-  }
-  throw new Error('Tous les proxies CORS ont échoué');
+  const proxyUrl   = 'https://corsproxy.io/?url=' + encodeURIComponent(urlWithKey);
+  const res  = await fetch(proxyUrl);
+  const data = await res.json();
+  if (data.status && data.status.status_code === 401) throw { code: 401, message: 'Clé API expirée — renouvelle-la sur developer.riotgames.com' };
+  if (data.status && data.status.status_code === 404) throw { code: 404, message: 'Compte introuvable' };
+  if (!res.ok) throw { code: res.status, message: JSON.stringify(data) };
+  return data;
 }
 
 // Récupère le PUUID depuis un Riot ID (Pseudo#TAG)
