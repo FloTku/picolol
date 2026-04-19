@@ -325,8 +325,13 @@ function fbCreateGame(gameId, hostId) {
     votes: {}, deliberationVotes: {}, verdictVotes: {}, replayVotes: {},
     previousEffects: {}, revealIndex: 0,
     championMode: false, randomLane: false, usedChampions: [],
-    players: {},
+    scores: {}, players: {},
   });
+}
+
+// Scores
+function fbAddScore(gid, pid, points) {
+  return db.ref('games/' + gid + '/scores/' + pid).transaction(cur => (cur || 0) + points);
 }
 
 function fbJoinGame(gid, pid, name, riotId) {
@@ -511,6 +516,7 @@ function onGameUpdate(game) {
   const championMode    = game.championMode      || false;
   const randomLane      = game.randomLane        || false;
   const usedChampions   = game.usedChampions     || [];
+  const scores          = game.scores            || {};
   const phase           = game.phase;
 
   // Retour lobby depuis effects
@@ -554,6 +560,9 @@ function onGameUpdate(game) {
   }
 
   if (document.querySelector('.draw-overlay') && phase !== 'effects') return;
+
+  // Leaderboard toujours mis à jour
+  renderLeaderboard(players, scores);
 
   switch (phase) {
     case 'lobby':        handleLobby(players, votes, prevEffects, championMode, randomLane);   break;
@@ -731,6 +740,33 @@ let ingameStartTime     = null;
 function handleInGame(players, game) {
   showView('ingame');
 
+  // Rappel rôle + champion pour ce joueur
+  const me = players.find(p => p.id === state.playerId);
+  const recapEl = document.getElementById('ingame-recap');
+  if (recapEl && me) {
+    recapEl.innerHTML = '';
+    // Champion
+    if (me.champion) {
+      const img = document.createElement('img');
+      img.src       = championImageUrl(me.champion.name);
+      img.alt       = me.champion.name;
+      img.className = 'ingame-recap-champ';
+      img.onerror   = () => img.style.display = 'none';
+      recapEl.appendChild(img);
+    }
+    const info = document.createElement('div');
+    info.className = 'ingame-recap-info';
+    if (me.champion) {
+      info.innerHTML += `<span class="ingame-recap-champion">${LANE_ICONS[me.champion.lane] || ''} ${me.champion.name}</span>`;
+    }
+    if (me.role) {
+      info.innerHTML += `<span class="ingame-recap-role">🎭 ${me.role.nom}</span>`;
+      info.innerHTML += `<span class="ingame-recap-obj">${me.role.objectif}</span>`;
+    }
+    recapEl.appendChild(info);
+    recapEl.style.display = 'flex';
+  }
+
   // Timer
   if (!ingameStartTime) ingameStartTime = Date.now();
   if (!ingameTimerInterval) {
@@ -743,7 +779,7 @@ function handleInGame(players, game) {
     }, 1000);
   }
 
-  // Bouton "Partie terminée" — visible pour tous
+  // Bouton "Partie terminée"
   const container = document.getElementById('vote-container-ingame');
   if (container && !container.querySelector('button')) {
     const btn = document.createElement('button');
@@ -940,8 +976,14 @@ function handleReveal(players, revealIndex) {
 
   if (state.isHost) {
     const btn = document.createElement('button');
-    btn.textContent = revealIndex >= players.length - 1 ? '→ Passer au verdict' : '→ Joueur suivant';
-    btn.addEventListener('click', () => fbNextReveal(state.gameId, revealIndex + 1));
+    const isLast = revealIndex >= players.length - 1;
+    btn.textContent = isLast ? '→ Passer au verdict' : '→ Joueur suivant';
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      // Calcule les points de délibération pour ce joueur révélé
+      await calculateRevealPoints(current, players);
+      fbNextReveal(state.gameId, revealIndex + 1);
+    });
     c.appendChild(btn);
   } else {
     const w = document.createElement('p');
@@ -950,9 +992,33 @@ function handleReveal(players, revealIndex) {
   }
 }
 
-// ========================
-//  PHASE VERDICT
-// ========================
+// Calcule +1 point par bonne réponse de délibération pour le joueur révélé
+async function calculateRevealPoints(revealedPlayer, players) {
+  if (!revealedPlayer || !revealedPlayer.role) return;
+  const snap   = await gameRef(state.gameId).once('value');
+  const dVotes = snap.val().deliberationVotes || {};
+
+  // Pour chaque voteur, vérifie s'il a trouvé le bon rôle du joueur révélé
+  const promises = players
+    .filter(voter => voter.id !== revealedPlayer.id)
+    .map(voter => {
+      const myVotes   = dVotes[voter.id] || {};
+      const votedRole = myVotes[revealedPlayer.id];
+      if (votedRole && votedRole === revealedPlayer.role.nom) {
+        return fbAddScore(state.gameId, voter.id, 1);
+      }
+      return Promise.resolve();
+    });
+  await Promise.all(promises);
+}
+
+// Ajoute les points de verdict (+2 si réussi, 0 si raté)
+async function applyVerdictPoints(players) {
+  await Promise.all(players.map(p => {
+    if (p.success === true) return fbAddScore(state.gameId, p.id, 2);
+    return Promise.resolve();
+  }));
+}
 function handleVerdict(players, vVotes) {
   showView('verdict');
   renderVerdict(players, vVotes);
@@ -1014,6 +1080,8 @@ async function applyVerdictAndLaunchEffects(players, vVotes) {
   await Promise.all(players.map(p => fbSetSuccess(state.gameId, p.id, majority(vVotes[p.id] || {}))));
   const snap = await gameRef(state.gameId).once('value');
   const fresh = playersArray(snap.val().players);
+  // Points de verdict
+  await applyVerdictPoints(fresh);
   await Promise.all(fresh.map(p => fbSetEffect(state.gameId, p.id, drawEffect(p.success === true))));
   await fbResetVerdictVotes(state.gameId);
   await fbResetVotes(state.gameId);
@@ -1086,7 +1154,41 @@ async function restartGame() {
 }
 
 // ========================
-//  VOTE BUTTON GÉNÉRIQUE
+//  LEADERBOARD
+// ========================
+function renderLeaderboard(players, scores) {
+  const sidebar = document.getElementById('leaderboard-sidebar');
+  const panel   = document.getElementById('leaderboard-panel-inner');
+  if (!players.length) return;
+
+  const sorted = [...players].sort((a, b) => (scores[b.id] || 0) - (scores[a.id] || 0));
+  const html   = sorted.map((p, i) => {
+    const pts    = scores[p.id] || 0;
+    const isMe   = p.id === state.playerId;
+    const medals = ['🥇','🥈','🥉'];
+    const rank   = medals[i] || `${i+1}.`;
+    return `
+      <div class="lb-item ${isMe ? 'lb-item--me' : ''}">
+        <span class="lb-rank">${rank}</span>
+        <span class="lb-name">${p.name}${isMe ? ' <span class="lb-you">(toi)</span>' : ''}</span>
+        <span class="lb-pts">${pts} <span class="lb-pts-label">pts</span></span>
+      </div>`;
+  }).join('');
+
+  const title = `<div class="lb-title">🏆 Classement</div>`;
+  if (sidebar) sidebar.innerHTML = title + html;
+  if (panel)   panel.innerHTML   = title + html;
+}
+
+function openLeaderboardPanel() {
+  document.getElementById('leaderboard-panel')?.classList.add('open');
+}
+function closeLeaderboardPanel() {
+  document.getElementById('leaderboard-panel')?.classList.remove('open');
+}
+
+// ========================
+//  RAPPEL IN_GAME — rôle + champion
 // ========================
 function renderVoteButton(phase, votes, players, label) {
   const c = document.getElementById('vote-container-' + phase);
@@ -1279,6 +1381,12 @@ document.getElementById('btn-rules-close').addEventListener('click', closeRulesP
 // Clic sur le fond ferme le panel
 document.getElementById('rules-panel').addEventListener('click', e => {
   if (e.target === document.getElementById('rules-panel')) closeRulesPanel();
+});
+
+// Leaderboard mobile
+document.getElementById('btn-lb-float').addEventListener('click', openLeaderboardPanel);
+document.getElementById('leaderboard-panel').addEventListener('click', e => {
+  if (e.target === document.getElementById('leaderboard-panel')) closeLeaderboardPanel();
 });
 
 document.getElementById('cb-champion-mode').addEventListener('change', e => {

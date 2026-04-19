@@ -56,6 +56,8 @@
   <!-- IN GAME — en attente de fin de partie LoL -->
   <div id="view-ingame" class="view" style="display:none">
     <h2>Partie en cours</h2>
+    <!-- Rappel rôle + champion -->
+    <div id="ingame-recap" class="ingame-recap" style="display:none"></div>
     <div class="ingame-status">
       <div class="ingame-icon">⚔️</div>
       <p class="ingame-label">La partie est lancée !</p>
@@ -150,8 +152,14 @@
     </div>
   </div>
 
-  <!-- Bouton ? flottant (visible pendant la partie) -->
-  <button id="btn-rules-float" class="rules-float-btn" title="Sommaire">?</button>
+  <!-- LEADERBOARD SIDEBAR (desktop) -->
+  <div id="leaderboard-sidebar" class="lb-sidebar"></div>
+
+  <!-- LEADERBOARD PANEL (mobile) -->
+  <div id="leaderboard-panel" class="lb-panel" aria-hidden="true">
+    <div id="leaderboard-panel-inner" class="lb-panel-inner"></div>
+  </div>
+  <button id="btn-lb-float" class="lb-float-btn" title="Classement">🏆</button>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>

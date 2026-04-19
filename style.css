@@ -1540,3 +1540,237 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   .draw-card { padding: 1.5rem 1.2rem; }
   .champion-draw-img { width: 100px; height: 100px; }
 }
+
+/* ========================
+   LEADERBOARD SIDEBAR (desktop)
+======================== */
+.lb-sidebar {
+  position: fixed;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  z-index: 10;
+}
+
+.lb-title {
+  font-family: 'Cinzel', serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-gold);
+  margin-bottom: 0.3rem;
+}
+
+.lb-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-gold);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.7rem;
+  transition: background 0.2s;
+}
+
+.lb-item--me {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.06);
+}
+
+.lb-rank {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  width: 1.6rem;
+  text-align: center;
+}
+
+.lb-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.lb-you {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.lb-pts {
+  font-family: 'Cinzel', serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  flex-shrink: 0;
+}
+
+.lb-pts-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-family: 'Rajdhani', sans-serif;
+  font-weight: 400;
+  letter-spacing: 1px;
+}
+
+/* ========================
+   LEADERBOARD PANEL (mobile)
+======================== */
+.lb-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  pointer-events: none;
+}
+
+.lb-panel.open { pointer-events: all; }
+
+.lb-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(1,2,8,0.7);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(2px);
+}
+
+.lb-panel.open::before { opacity: 1; }
+
+.lb-panel-inner {
+  position: relative;
+  width: min(280px, 85%);
+  height: 100%;
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border-gold);
+  padding: 2rem 1.2rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+
+.lb-panel.open .lb-panel-inner { transform: translateX(0); }
+
+/* Bouton 🏆 flottant */
+.lb-float-btn {
+  position: fixed;
+  bottom: 1.2rem;
+  left: 1.2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0;
+  z-index: 100;
+  border: 1px solid var(--gold-dark);
+  background: var(--bg-card);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(201,168,76,0.2), 0 4px 16px rgba(0,0,0,0.6);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.lb-float-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px rgba(201,168,76,0.5);
+  transform: scale(1.1);
+}
+
+.lb-float-btn::before, .lb-float-btn::after { display: none; }
+
+/* Sur desktop : cacher le bouton flottant et le panel, montrer la sidebar */
+@media (min-width: 481px) {
+  .lb-float-btn { display: none; }
+  .lb-panel      { display: none; }
+}
+
+/* Sur mobile : cacher la sidebar, montrer le bouton flottant */
+@media (max-width: 480px) {
+  .lb-sidebar { display: none; }
+}
+
+/* ========================
+   RAPPEL IN_GAME
+======================== */
+.ingame-recap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #050d1c 0%, #071525 100%);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.ingame-recap::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  box-shadow: 0 0 10px rgba(201,168,76,0.4);
+}
+
+.ingame-recap-champ {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(201,168,76,0.4);
+  box-shadow: 0 0 12px rgba(201,168,76,0.2);
+  flex-shrink: 0;
+}
+
+.ingame-recap-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ingame-recap-champion {
+  font-family: 'Cinzel', serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #93c5fd;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ingame-recap-role {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.5px;
+}
+
+.ingame-recap-obj {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+  font-weight: 600;
+}
