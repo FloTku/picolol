@@ -650,7 +650,7 @@ function renderLobby(players, votes, prevEffects, championMode, randomLane) {
   if (hostControls) {
     // Afficher tant que la partie n'est pas encore lancée (pas de rôles distribués)
     const launched = players.some(p => p.role !== null && p.role !== undefined);
-    hostControls.style.display = state.isHost && !launched ? 'flex' : 'none';
+    hostControls.style.display = state.isHost && !launched ? 'block' : 'none';
 
     const cb = document.getElementById('cb-champion-mode');
     if (cb) cb.checked = championMode;
@@ -1404,8 +1404,6 @@ document.getElementById('cb-random-lane').addEventListener('change', e => {
 //  Canvas 2D : particules, runes flottantes, éclairs de mana
 // ========================
 (function initBackground() {
-  // Attendre que le DOM soit complètement rendu
-  requestAnimationFrame(() => {
   const canvas = document.getElementById('bg-canvas');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -1715,7 +1713,6 @@ document.getElementById('cb-random-lane').addEventListener('change', e => {
   }
 
   draw();
-  }); // fin requestAnimationFrame
 })();
 
 // ========================

@@ -1212,11 +1212,16 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
 /* ========================
    CHAMPION MODE — LOBBY
 ======================== */
+#host-champion-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .champion-mode-label {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-family: 'Rajdhani', sans-serif;
   font-size: 0.9rem;
   font-weight: 600;
   letter-spacing: 1px;
