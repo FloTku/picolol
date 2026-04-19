@@ -330,13 +330,72 @@ function fbCreateGame(gameId, hostId) {
     votes: {}, deliberationVotes: {}, verdictVotes: {}, replayVotes: {},
     previousEffects: {}, revealIndex: 0,
     championMode: false, randomLane: false, usedChampions: [],
-    scores: {}, players: {},
+    scores: {}, immunity: {}, usedBonus: {},
+    bonusEvent: null, // dernière action bonus visible par tous
+    players: {},
   });
 }
 
 // Scores
 function fbAddScore(gid, pid, points) {
   return db.ref('games/' + gid + '/scores/' + pid).transaction(cur => (cur || 0) + points);
+}
+
+// Immunité
+function fbSetImmunity(gid, pid, parties) {
+  return db.ref('games/' + gid + '/immunity/' + pid).set(parties);
+}
+function fbDecreaseImmunity(gid, pid) {
+  return db.ref('games/' + gid + '/immunity/' + pid).transaction(cur => {
+    if (!cur || cur <= 1) return null; // supprime le nœud
+    return cur - 1;
+  });
+}
+
+// Bonus utilisé
+function fbMarkBonusUsed(gid, pid) {
+  return db.ref('games/' + gid + '/usedBonus/' + pid).set(true);
+}
+
+// Événement bonus (annonce visible par tous)
+function fbBonusEvent(gid, message, type = 'info') {
+  return gameRef(gid).update({
+    bonusEvent: { message, type, ts: Date.now() }
+  });
+}
+
+// Voler le bonus d'un autre joueur
+async function fbStealBonus(gid, thiefId, victimId) {
+  const snap         = await gameRef(gid).once('value');
+  const g            = snap.val();
+  const thief        = g.players[thiefId];
+  const victim       = g.players[victimId];
+  if (!victim || !victim.effect) return;
+
+  // Le voleur récupère l'effet de la victime
+  await playerRef(gid, thiefId).update({ effect: victim.effect });
+  // La victime perd son effet
+  await playerRef(gid, victimId).update({ effect: null });
+  // Marquer le bonus comme utilisé
+  await fbMarkBonusUsed(gid, thiefId);
+  // Annonce globale
+  await fbBonusEvent(gid,
+    `🦊 ${thief.name} a volé l'effet de ${victim.name} !`,
+    'steal'
+  );
+}
+
+// Annuler son propre malus
+async function fbCancelOwnMalus(gid, pid) {
+  const snap = await gameRef(gid).once('value');
+  const p    = snap.val().players[pid];
+  if (!p) return;
+  await playerRef(gid, pid).update({ effect: null });
+  await fbMarkBonusUsed(gid, pid);
+  await fbBonusEvent(gid,
+    `🛡️ ${p.name} a annulé son malus !`,
+    'cancel'
+  );
 }
 
 function fbJoinGame(gid, pid, name, riotId) {
@@ -545,6 +604,9 @@ function onGameUpdate(game) {
   const randomLane      = game.randomLane        || false;
   const usedChampions   = game.usedChampions     || [];
   const scores          = game.scores            || {};
+  const immunity        = game.immunity          || {};
+  const usedBonus       = game.usedBonus         || {};
+  const bonusEvent      = game.bonusEvent        || null;
   const phase           = game.phase;
 
   // Retour lobby depuis effects
@@ -592,6 +654,9 @@ function onGameUpdate(game) {
   // Leaderboard toujours mis à jour
   renderLeaderboard(players, scores);
 
+  // Animation bonus event
+  if (bonusEvent && bonusEvent.ts) renderBonusEvent(bonusEvent);
+
   switch (phase) {
     case 'lobby':        handleLobby(players, votes, prevEffects, championMode, randomLane);   break;
     case 'roles':        handleRoles(players, votes);                              break;
@@ -599,7 +664,7 @@ function onGameUpdate(game) {
     case 'deliberation': handleDeliberation(players, dVotes);                     break;
     case 'reveal':       handleReveal(players, revealIndex, revealOrder);          break;
     case 'verdict':      handleVerdict(players, vVotes);                           break;
-    case 'effects':      handleEffects(players, rVotes);                           break;
+    case 'effects':      handleEffects(players, rVotes, immunity, usedBonus);      break;
   }
 }
 
@@ -1107,10 +1172,26 @@ function renderVerdict(players, vVotes) {
 async function applyVerdictAndLaunchEffects(players, vVotes) {
   await Promise.all(players.map(p => fbSetSuccess(state.gameId, p.id, majority(vVotes[p.id] || {}))));
   const snap = await gameRef(state.gameId).once('value');
-  const fresh = playersArray(snap.val().players);
+  const g    = snap.val();
+  const fresh = playersArray(g.players);
+  const imm   = g.immunity || {};
+
   // Points de verdict
   await applyVerdictPoints(fresh);
-  await Promise.all(fresh.map(p => fbSetEffect(state.gameId, p.id, drawEffect(p.success === true))));
+
+  // Distribue les effets — bloque le malus si immunisé
+  await Promise.all(fresh.map(p => {
+    const isImmune = imm[p.id] > 0;
+    if (p.success === true) {
+      return fbSetEffect(state.gameId, p.id, drawEffect(true));
+    } else if (isImmune) {
+      // Immunisé → pas de malus, pas d'effet
+      return fbSetEffect(state.gameId, p.id, null);
+    } else {
+      return fbSetEffect(state.gameId, p.id, drawEffect(false));
+    }
+  }));
+
   await fbResetVerdictVotes(state.gameId);
   await fbResetVotes(state.gameId);
   await fbSetPhase(state.gameId, 'effects');
@@ -1119,34 +1200,127 @@ async function applyVerdictAndLaunchEffects(players, vVotes) {
 // ========================
 //  PHASE EFFECTS
 // ========================
-function handleEffects(players, rVotes) {
+function handleEffects(players, rVotes, immunity, usedBonus) {
   showView('effects');
-  renderEffects(players, rVotes);
+  renderEffects(players, rVotes, immunity, usedBonus);
   if (allReplayVoted(rVotes, players) && state.isHost && !transitioning) {
     transitioning = true;
-    restartGame().finally(() => { transitioning = false; });
+    restartGame(immunity).finally(() => { transitioning = false; });
   }
 }
 
-function renderEffects(players, rVotes) {
+function renderEffects(players, rVotes, immunity, usedBonus) {
   setVisible('host-effects-panel', false);
   setVisible('player-effect-panel', true);
-  const me = players.find(p => p.id === state.playerId);
-  renderMyEffect(me && me.effect ? me.effect : null);
+  const me        = players.find(p => p.id === state.playerId);
+  const myEffect  = me && me.effect ? me.effect : null;
+  const hasUsed   = usedBonus[state.playerId];
+  const isImmune  = immunity[state.playerId] > 0;
 
+  renderMyEffect(myEffect, isImmune);
+
+  // Boutons interactifs selon le bonus
+  const actionsEl = document.getElementById('effects-actions');
+  if (actionsEl) {
+    actionsEl.innerHTML = '';
+
+    if (myEffect && !hasUsed) {
+      const txt = myEffect.description || '';
+
+      // VOLER le bonus d'un autre joueur
+      if (txt.includes('voler le bonus')) {
+        const others = players.filter(p => p.id !== state.playerId && p.effect);
+        if (others.length) {
+          const label = document.createElement('p');
+          label.className   = 'muted';
+          label.textContent = 'Choisis qui voler :';
+          actionsEl.appendChild(label);
+          others.forEach(target => {
+            const btn = document.createElement('button');
+            btn.className   = 'btn-bonus-action';
+            btn.textContent = `🦊 Voler ${target.name} (${target.effect?.rarity || '?'})`;
+            btn.addEventListener('click', () => {
+              btn.disabled = true;
+              fbStealBonus(state.gameId, state.playerId, target.id);
+            });
+            actionsEl.appendChild(btn);
+          });
+        }
+      }
+
+      // ANNULER son propre malus
+      else if (txt.includes('annuler un malus') && myEffect.type === 'bonus') {
+        // Ce joueur a un bonus "annuler un malus" — il peut annuler son prochain malus
+        // (s'applique à la prochaine partie — on stocke l'immunité 1 partie)
+        const btn = document.createElement('button');
+        btn.className   = 'btn-bonus-action';
+        btn.textContent = '🛡️ Annuler mon prochain malus';
+        btn.addEventListener('click', () => {
+          btn.disabled = true;
+          fbSetImmunity(state.gameId, state.playerId, 1);
+          fbMarkBonusUsed(state.gameId, state.playerId);
+          fbBonusEvent(state.gameId, `🛡️ ${me.name} est immunisé contre le prochain malus !`, 'immunity');
+        });
+        actionsEl.appendChild(btn);
+      }
+
+      // IMMUNITÉ 2 parties
+      else if (txt.includes('Immunité totale')) {
+        const btn = document.createElement('button');
+        btn.className   = 'btn-bonus-action';
+        btn.textContent = '🛡️ Activer l\'immunité (2 parties)';
+        btn.addEventListener('click', () => {
+          btn.disabled = true;
+          fbSetImmunity(state.gameId, state.playerId, 2);
+          fbMarkBonusUsed(state.gameId, state.playerId);
+          fbBonusEvent(state.gameId, `🛡️ ${me.name} est immunisé contre les malus pendant 2 parties !`, 'immunity');
+        });
+        actionsEl.appendChild(btn);
+      }
+    }
+
+    // Badge immunité
+    if (isImmune) {
+      const badge = document.createElement('div');
+      badge.className   = 'immunity-badge';
+      badge.textContent = `🛡️ Immunisé — ${immunity[state.playerId]} partie${immunity[state.playerId] > 1 ? 's' : ''} restante${immunity[state.playerId] > 1 ? 's' : ''}`;
+      actionsEl.appendChild(badge);
+    }
+  }
+
+  // Effets des autres joueurs (visibles par tous)
+  const othersEl = document.getElementById('effects-others');
+  if (othersEl) {
+    othersEl.innerHTML = '';
+    players.filter(p => p.id !== state.playerId).forEach(p => {
+      if (!p.effect) return;
+      const item = document.createElement('div');
+      item.className = 'effect-other-item';
+      const isImmuneOther = immunity[p.id] > 0;
+      item.innerHTML = `
+        <span class="effect-other-name">${p.name}</span>
+        <span class="effect-other-type ${p.effect.type === 'bonus' ? 'bonus' : 'malus'}">
+          ${p.effect.type === 'bonus' ? '✨' : '💀'} ${p.effect.rarity}
+          ${isImmuneOther ? ' 🛡️' : ''}
+        </span>`;
+      othersEl.appendChild(item);
+    });
+  }
+
+  // Bouton Rejouer
   const c = document.getElementById('vote-container-effects');
   if (!c) return;
-  const count   = Object.keys(rVotes).length;
-  const voted   = rVotes[state.playerId];
+  const count = Object.keys(rVotes).length;
+  const voted = rVotes[state.playerId];
   c.innerHTML = `
     <p class="vote-count">${count} / ${players.length} prêt${count > 1 ? 's' : ''}</p>
     <button id="btn-vote-effects" ${voted ? 'disabled' : ''}>${voted ? '✅ Rejouer' : '✔ Rejouer'}</button>`;
   if (!voted) {
-    document.getElementById('btn-vote-effects').addEventListener('click', () => fbVoteReplay(state.gameId, state.playerId));
+    document.getElementById('btn-vote-effects')?.addEventListener('click', () => fbVoteReplay(state.gameId, state.playerId));
   }
 }
 
-function renderMyEffect(effect) {
+function renderMyEffect(effect, isImmune) {
   const card  = document.querySelector('.effect-card');
   const badge = document.getElementById('effect-type-badge');
   const name  = document.getElementById('effect-name');
@@ -1156,6 +1330,11 @@ function renderMyEffect(effect) {
     if (badge) { badge.textContent = effect.rarity || ''; applyRarityColor(badge, effect.rarity); }
     if (name)  name.textContent = effect.type === 'bonus' ? '✨ Objectif réussi !' : '💀 Objectif raté…';
     if (desc)  desc.textContent = effect.description;
+  } else if (isImmune) {
+    if (card)  card.removeAttribute('data-type');
+    if (badge) badge.textContent = '🛡️';
+    if (name)  name.textContent  = 'Immunisé !';
+    if (desc)  desc.textContent  = 'Tu es protégé contre les malus cette partie.';
   } else {
     if (card)  card.removeAttribute('data-type');
     if (badge) badge.textContent = '—';
@@ -1164,20 +1343,57 @@ function renderMyEffect(effect) {
   }
 }
 
+// Animation bonus event — annonce visible par tous
+let lastBonusEventTs = 0;
+function renderBonusEvent(event) {
+  if (!event || event.ts <= lastBonusEventTs) return;
+  lastBonusEventTs = event.ts;
+
+  const toast = document.createElement('div');
+  toast.className = 'bonus-toast';
+  const colors = { steal: '#f59e0b', cancel: '#22c55e', immunity: '#a78bfa', info: '#60a5fa' };
+  toast.style.borderColor = colors[event.type] || colors.info;
+  toast.style.boxShadow   = `0 0 20px ${colors[event.type] || colors.info}40`;
+  toast.textContent = event.message;
+  document.body.appendChild(toast);
+
+  // Animation entrée
+  requestAnimationFrame(() => toast.classList.add('bonus-toast--visible'));
+
+  // Disparaît après 3.5s
+  setTimeout(() => {
+    toast.classList.remove('bonus-toast--visible');
+    setTimeout(() => toast.remove(), 400);
+  }, 3500);
+}
+
 // ========================
 //  RESTART
 // ========================
-async function restartGame() {
+async function restartGame(immunity = {}) {
   currentPhase = null;
   clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
   const snap   = await gameRef(state.gameId).once('value');
-  const fresh  = playersArray(snap.val().players);
+  const g      = snap.val();
+  const fresh  = playersArray(g.players);
+  const imm    = g.immunity || {};
+
   await fbSavePreviousEffects(state.gameId, fresh);
   await Promise.all(fresh.map(p => playerRef(state.gameId, p.id).update({ role: null, success: null, effect: null, lane: null, champion: null })));
+
+  // Décrémente l'immunité de chaque joueur immunisé
+  const newImmunity = {};
+  Object.entries(imm).forEach(([pid, count]) => {
+    if (count > 1) newImmunity[pid] = count - 1;
+    // Si count === 1 → on le retire (immunité expirée)
+  });
+
   await gameRef(state.gameId).update({
     phase: 'lobby', votes: {}, deliberationVotes: {},
     verdictVotes: {}, replayVotes: {}, revealIndex: 0,
     usedChampions: [], randomLane: false,
+    usedBonus: {}, bonusEvent: null,
+    immunity: newImmunity,
   });
 }
 
