@@ -1,23 +1,163 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Picolol</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Canvas de fond animé — Summoner's Rift -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- HOME -->
+  <div id="view-home" class="view">
+    <h1>🎮 Picolol</h1>
+    <div class="input-group">
+      <input id="input-host-name" type="text" placeholder="Ton pseudo" maxlength="20" />
+      <input id="input-host-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" />
+      <button id="btn-create">Créer une partie</button>
+    </div>
+    <div class="separator">ou</div>
+    <div class="input-group">
+      <input id="input-code" type="text" placeholder="Code de partie" maxlength="6" />
+      <input id="input-name" type="text" placeholder="Ton pseudo" maxlength="20" />
+      <input id="input-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" />
+      <button id="btn-join">Rejoindre</button>
+    </div>
+    <button id="btn-rules-home" class="btn-rules-inline">📖 Voir les rôles & effets</button>
+  </div>
 
 
-<button onclick="testFirebase()">TEST FIREBASE</button>
+  <!-- LOBBY -->
+  <div id="view-lobby" class="view" style="display:none">
+    <h2>Lobby</h2>
+    <div class="game-code-box">Code : <strong id="display-code">------</strong></div>
 
-  <h1 style="color:red">TEST GITHUB PAGES</h1>
+    <!-- Options hôte (injectées par JS) -->
+    <div id="host-champion-controls" style="display:none">
+      <label class="champion-mode-label">
+        <input type="checkbox" id="cb-champion-mode" />
+        🎲 Champions aléatoires
+      </label>
+      <label class="champion-mode-label" id="cb-random-lane-wrap" style="display:none">
+        <input type="checkbox" id="cb-random-lane" />
+        🗺️ Postes aléatoires
+      </label>
+    </div>
 
-  <div id="game"></div>
+    <div id="previous-effect-container" style="display:none"></div>
+    <ul id="player-list"></ul>
+    <div id="vote-container-lobby"></div>
+  </div>
 
+
+  <!-- IN GAME — en attente de fin de partie LoL -->
+  <div id="view-ingame" class="view" style="display:none">
+    <h2>Partie en cours</h2>
+    <div class="ingame-status">
+      <div class="ingame-icon">⚔️</div>
+      <p class="ingame-label">La partie est lancée !</p>
+      <p class="muted">Revenez ici dès que la partie est terminée.</p>
+      <div id="ingame-timer" class="ingame-timer">00:00</div>
+    </div>
+    <div id="ingame-stats-list" class="ingame-stats"></div>
+    <div id="vote-container-ingame"></div>
+  </div>
+
+
+  <!-- ROLES -->
+  <div id="view-roles" class="view" style="display:none">
+    <h2>Ton rôle</h2>
+    <!-- Bloc champion (visible uniquement en mode champion) -->
+    <div id="role-champion-block" class="role-champion-block" style="display:none"></div>
+    <div id="player-role-panel" style="display:none">
+      <div class="role-card">
+        <h3 id="role-name">—</h3>
+        <p id="role-objective">—</p>
+      </div>
+    </div>
+    <div id="vote-container-roles"></div>
+    <div id="host-roles-panel" style="display:none"></div>
+  </div>
+
+
+  <!-- DÉLIBÉRATION -->
+  <div id="view-deliberation" class="view" style="display:none">
+    <h2>Délibération</h2>
+    <p class="muted" style="text-align:center">Qui a quel rôle selon toi ?</p>
+    <div id="deliberation-list"></div>
+    <p id="deliberation-counter" class="vote-count" style="margin-top:0.5rem"></p>
+  </div>
+
+
+  <!-- REVEAL -->
+  <div id="view-reveal" class="view" style="display:none">
+    <h2>Révélation</h2>
+    <div id="reveal-container"></div>
+  </div>
+
+
+  <!-- VERDICT -->
+  <div id="view-verdict" class="view" style="display:none">
+    <h2>Verdict</h2>
+    <p class="muted" style="margin-bottom:0.5rem">Chaque joueur a-t-il réussi son objectif ?</p>
+    <ul id="verdict-list"></ul>
+    <p id="verdict-counter" class="vote-count" style="margin-top:0.5rem"></p>
+  </div>
+
+
+  <!-- EFFECTS -->
+  <div id="view-effects" class="view" style="display:none">
+    <h2>Ton effet</h2>
+    <div id="player-effect-panel" style="display:none">
+      <div class="effect-card">
+        <span id="effect-type-badge">—</span>
+        <h3 id="effect-name">—</h3>
+        <p id="effect-description">—</p>
+      </div>
+    </div>
+    <div id="vote-container-effects"></div>
+    <div id="host-effects-panel" style="display:none"></div>
+  </div>
+
+
+  <!-- SOMMAIRE — panel glissant -->
+  <div id="rules-panel" class="rules-panel" aria-hidden="true">
+    <div class="rules-panel-inner">
+      <button id="btn-rules-close" class="rules-close">✕</button>
+
+      <h2 class="rules-title">Sommaire</h2>
+
+      <!-- RÔLES -->
+      <section class="rules-section">
+        <h3 class="rules-section-title">🎭 Rôles</h3>
+        <div id="rules-roles-list" class="rules-list"></div>
+      </section>
+
+      <!-- BONUS -->
+      <section class="rules-section">
+        <h3 class="rules-section-title">✨ Bonus <span class="rules-subtitle">(objectif réussi)</span></h3>
+        <div id="rules-bonus-list" class="rules-list"></div>
+      </section>
+
+      <!-- MALUS -->
+      <section class="rules-section">
+        <h3 class="rules-section-title">💀 Malus <span class="rules-subtitle">(objectif raté)</span></h3>
+        <div id="rules-malus-list" class="rules-list"></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Bouton ? flottant (visible pendant la partie) -->
+  <button id="btn-rules-float" class="rules-float-btn" title="Sommaire">?</button>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
   <script src="app.js"></script>
-
 </body>
 </html>
