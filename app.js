@@ -12,20 +12,25 @@ const state = {
 //  DONNÉES DU JEU
 // ========================
 const ROLES = [
-  { nom: "Mister White",      objectif: "Être accusé par la majorité des joueurs à la fin de la partie." },
-  { nom: "Super-Héro",        objectif: "Avoir le plus de morts (Deaths)." },
-  { nom: "Le PGM",            objectif: "Avoir le plus de dégâts infligés." },
-  { nom: "Le Sup Originel",   objectif: "Avoir le plus d'assists." },
-  { nom: "Le Roi des Trolls", objectif: "Faire tilt au moins un coéquipier (subjectif, validé par l'équipe)." },
-  { nom: "Le Farmer",         objectif: "Avoir le plus de gold ou farm (CS)." },
-  { nom: "L'Intouchable",     objectif: "Avoir le moins de morts." },
-  { nom: "Le Visionnaire",    objectif: "Avoir le plus de vision score." },
-  { nom: "Le Feeder Assumé",  objectif: "Finir avec le plus de morts ET le moins de kills de l'équipe." },
-  { nom: "Le Split Pusher",   objectif: "Ne jamais participer à un teamfight après la minute 15 (subjectif, validé par l'équipe)." },
-  { nom: "L'Objectif First",  objectif: "Être le premier à pinger ou caller chaque objectif neutre (Baron, Dragon...)." },
-  { nom: "Le Fantôme",        objectif: "Ne jamais mourir seul — toujours en groupe de 2 minimum." },
-  { nom: "L'Invocateur",      objectif: "Utiliser ses 2 sorts d'invocateur dans la même minute au moins une fois." },
-  { nom: "Le Coach",          objectif: "Donner au moins 5 callouts utiles reconnus par l'équipe." },
+  { nom: "Mister White",        objectif: "Être accusé par la majorité des joueurs à la fin de la partie." },
+  { nom: "Super-Héro",          objectif: "Avoir le plus de morts (Deaths)." },
+  { nom: "Le PGM",              objectif: "Avoir le plus de dégâts infligés." },
+  { nom: "Le Sup Originel",     objectif: "Avoir le plus d'assists." },
+  { nom: "Le Roi des Trolls",   objectif: "Faire tilt au moins un coéquipier (subjectif, validé par l'équipe)." },
+  { nom: "Le Farmer",           objectif: "Avoir le plus de gold ou farm (CS)." },
+  { nom: "L'Intouchable",       objectif: "Avoir le moins de morts." },
+  { nom: "Le Visionnaire",      objectif: "Avoir le plus de vision score." },
+  { nom: "Le Feeder Assumé",    objectif: "Finir avec le plus de morts ET le moins de kills de l'équipe." },
+  { nom: "Le Split Pusher",     objectif: "Ne jamais participer à un teamfight après la minute 15 (subjectif, validé par l'équipe)." },
+  { nom: "L'Objectif First",    objectif: "Être le premier à pinger ou caller chaque objectif neutre (Baron, Dragon...)." },
+  { nom: "Le Fantôme",          objectif: "Ne jamais mourir seul — toujours en groupe de 2 minimum." },
+  { nom: "L'Invocateur",        objectif: "Utiliser ses 2 sorts d'invocateur dans la même minute au moins une fois." },
+  { nom: "Le Coach",            objectif: "Donner au moins 5 callouts utiles reconnus par l'équipe." },
+  { nom: "Le Kamikaze",         objectif: "Mourir dans les 3 premières minutes de la partie (premier sang inclus)." },
+  { nom: "L'Avocat du Diable",  objectif: "Défendre publiquement chaque décision de l'équipe sans jamais critiquer, même les mauvaises." },
+  { nom: "Le Sosie",            objectif: "Imiter le style de jeu d'un allié désigné secrètement — même façon de jouer, même aggression, même positioning." },
+  { nom: "Le Fantôme Offensif", objectif: "N'initier aucun combat, mais être présent dans au moins 80% des kills de l'équipe (subjectif, validé par l'équipe)." },
+  { nom: "Le Diplomate",        objectif: "Écrire au moins 10 messages positifs ou encourageants dans le chat pendant la partie." },
 ];
 
 const BONUS_POOL = [
@@ -383,7 +388,19 @@ function fbWatch(gid, cb) {
 
 function assignRoles(gid, players) {
   const shuffled = shuffleArray(ROLES);
-  return Promise.all(players.map((p, i) => fbSetRole(gid, p.id, shuffled[i % shuffled.length])));
+  return Promise.all(players.map((p, i) => {
+    const role = { ...shuffled[i % shuffled.length] };
+    // Le Sosie reçoit une cible aléatoire parmi les autres joueurs
+    if (role.nom === 'Le Sosie') {
+      const others = players.filter(o => o.id !== p.id);
+      const target = others[Math.floor(Math.random() * others.length)];
+      if (target) {
+        role.objectif = `Imite le style de jeu de ${target.name} — même façon de jouer, même agressivité, même positioning. ${target.name} ne sait pas qu'il est ta cible.`;
+        role.cible = target.name;
+      }
+    }
+    return fbSetRole(gid, p.id, role);
+  }));
 }
 
 // Mode champion : tire un champion unique par joueur selon sa lane, puis distribue les rôles
@@ -419,7 +436,18 @@ async function assignChampionsAndRoles(gid, players, randomLane) {
   await gameRef(gid).update({ usedChampions });
 
   const shuffled = shuffleArray(ROLES);
-  await Promise.all(players.map((p, i) => fbSetRole(gid, p.id, shuffled[i % shuffled.length])));
+  await Promise.all(players.map((p, i) => {
+    const role = { ...shuffled[i % shuffled.length] };
+    if (role.nom === 'Le Sosie') {
+      const others = players.filter(o => o.id !== p.id);
+      const target = others[Math.floor(Math.random() * others.length)];
+      if (target) {
+        role.objectif = `Imite le style de jeu de ${target.name} — même façon de jouer, même agressivité, même positioning. ${target.name} ne sait pas qu'il est ta cible.`;
+        role.cible = target.name;
+      }
+    }
+    return fbSetRole(gid, p.id, role);
+  }));
 }
 
 // ========================
