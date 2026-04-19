@@ -1371,3 +1371,172 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
 
 .ingame-stat-name { color: var(--text); }
 .ingame-stat-kda  { color: var(--text-dim); font-size: 0.85rem; letter-spacing: 0.5px; }
+
+/* ========================
+   RESPONSIVE MOBILE
+   Breakpoint : 480px
+======================== */
+@media (max-width: 480px) {
+
+  /* Base */
+  body {
+    padding: 0.75rem;
+    align-items: flex-start;
+    padding-top: 1rem;
+  }
+
+  .view {
+    max-width: 100%;
+    gap: 0.85rem;
+  }
+
+  /* Typographie */
+  h1 {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+  }
+
+  h2 {
+    font-size: 1rem;
+    letter-spacing: 3px;
+  }
+
+  h3 {
+    font-size: 0.95rem;
+  }
+
+  /* Inputs & boutons — plus grands pour les doigts */
+  input, select {
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+  }
+
+  button {
+    padding: 1rem 1rem;
+    font-size: 0.88rem;
+    letter-spacing: 2px;
+  }
+
+  /* Code de partie */
+  .game-code-box strong {
+    font-size: 1.8rem;
+    letter-spacing: 8px;
+  }
+
+  /* Carte rôle */
+  .role-card {
+    padding: 1.3rem;
+  }
+
+  .role-card h3 { font-size: 1.1rem; }
+  .role-card p  { font-size: 0.95rem; }
+
+  /* Carte effet */
+  .effect-card { padding: 1.3rem; }
+  #effect-name { font-size: 1rem; }
+  #effect-description { font-size: 0.95rem; }
+
+  /* Délibération — colonne sur mobile */
+  .deliberation-item {
+    padding: 0.8rem;
+  }
+
+  .deliberation-item select {
+    font-size: 1rem;
+    padding: 0.7rem 0.8rem;
+  }
+
+  .btn-confirm-vote {
+    width: 100%;
+    padding: 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  /* Verdict */
+  .stat-vote-item {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+  }
+
+  .btn-success, .btn-fail {
+    flex: 1;
+    padding: 0.6rem 0.5rem;
+    font-size: 0.78rem;
+  }
+
+  /* Reveal */
+  .reveal-card {
+    padding: 1.5rem 1.2rem;
+  }
+
+  .reveal-name { font-size: 1.3rem; }
+  .reveal-role-name { font-size: 1.1rem; }
+  .reveal-objectif { font-size: 0.88rem; }
+
+  /* Overlay draw — plus petit sur mobile */
+  .draw-card {
+    width: calc(100vw - 2.5rem);
+    max-width: 320px;
+    padding: 2rem 1.5rem;
+  }
+
+  .draw-card-role { font-size: 1.2rem; }
+  .draw-card-objectif { font-size: 0.88rem; }
+
+  .champion-draw-img {
+    width: 120px;
+    height: 120px;
+  }
+
+  /* Panel sommaire — pleine largeur sur mobile */
+  .rules-panel-inner {
+    width: 100%;
+    padding: 1.5rem 1rem;
+  }
+
+  .rules-role-name { font-size: 0.82rem; }
+  .rules-role-obj  { font-size: 0.82rem; }
+  .rules-effect-text { font-size: 0.82rem; }
+
+  /* Bouton ? flottant — plus grand */
+  .rules-float-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+    bottom: 1rem;
+    right: 1rem;
+  }
+
+  /* Lobby joueurs */
+  .lobby-player-item { padding: 0.7rem 0.8rem; }
+  .lobby-name { font-size: 0.9rem; }
+
+  .lane-select {
+    font-size: 1rem;
+    padding: 0.6rem 0.7rem;
+  }
+
+  /* In-game */
+  .ingame-timer { font-size: 1.6rem; }
+  .ingame-label { font-size: 1rem; }
+
+  /* Bloc champion vue rôle */
+  .role-champion-block { padding: 0.7rem 0.8rem; }
+  .role-champ-img { width: 48px; height: 48px; }
+  .role-champ-name { font-size: 0.9rem; }
+
+  /* Checkboxes hôte */
+  .champion-mode-label {
+    font-size: 0.88rem;
+    padding: 0.65rem 0.8rem;
+  }
+}
+
+/* Très petits écrans (iPhone SE etc.) */
+@media (max-width: 360px) {
+  h1 { font-size: 1.35rem; }
+  .game-code-box strong { font-size: 1.5rem; letter-spacing: 6px; }
+  .draw-card { padding: 1.5rem 1.2rem; }
+  .champion-draw-img { width: 100px; height: 100px; }
+}

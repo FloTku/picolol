@@ -15,15 +15,15 @@
   <div id="view-home" class="view">
     <h1>🎮 Picolol</h1>
     <div class="input-group">
-      <input id="input-host-name" type="text" placeholder="Ton pseudo" maxlength="20" />
-      <input id="input-host-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" />
+      <input id="input-host-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
+      <input id="input-host-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
       <button id="btn-create">Créer une partie</button>
     </div>
     <div class="separator">ou</div>
     <div class="input-group">
-      <input id="input-code" type="text" placeholder="Code de partie" maxlength="6" />
-      <input id="input-name" type="text" placeholder="Ton pseudo" maxlength="20" />
-      <input id="input-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" />
+      <input id="input-code" type="text" placeholder="Code de partie" maxlength="6" autocomplete="off" inputmode="text" style="text-transform:uppercase" />
+      <input id="input-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
+      <input id="input-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
       <button id="btn-join">Rejoindre</button>
     </div>
     <button id="btn-rules-home" class="btn-rules-inline">📖 Voir les rôles & effets</button>
