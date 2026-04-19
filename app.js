@@ -1370,32 +1370,31 @@ function populateRulesEffects(containerId, pool) {
 }
 
 // Bouton home
-document.getElementById('btn-rules-home').addEventListener('click', openRulesPanel);
+document.getElementById('btn-rules-home')?.addEventListener('click', openRulesPanel);
 
 // Bouton flottant (pendant la partie)
-document.getElementById('btn-rules-float').addEventListener('click', openRulesPanel);
+document.getElementById('btn-rules-float')?.addEventListener('click', openRulesPanel);
 
 // Fermeture
-document.getElementById('btn-rules-close').addEventListener('click', closeRulesPanel);
+document.getElementById('btn-rules-close')?.addEventListener('click', closeRulesPanel);
 
 // Clic sur le fond ferme le panel
-document.getElementById('rules-panel').addEventListener('click', e => {
+document.getElementById('rules-panel')?.addEventListener('click', e => {
   if (e.target === document.getElementById('rules-panel')) closeRulesPanel();
 });
 
 // Leaderboard mobile
-document.getElementById('btn-lb-float').addEventListener('click', openLeaderboardPanel);
-document.getElementById('leaderboard-panel').addEventListener('click', e => {
+document.getElementById('btn-lb-float')?.addEventListener('click', openLeaderboardPanel);
+document.getElementById('leaderboard-panel')?.addEventListener('click', e => {
   if (e.target === document.getElementById('leaderboard-panel')) closeLeaderboardPanel();
 });
 
-document.getElementById('cb-champion-mode').addEventListener('change', e => {
+document.getElementById('cb-champion-mode')?.addEventListener('change', e => {
   fbSetChampionMode(state.gameId, e.target.checked);
-  // Si on désactive le mode champion, on désactive aussi le poste aléatoire
   if (!e.target.checked) fbSetRandomLane(state.gameId, false);
 });
 
-document.getElementById('cb-random-lane').addEventListener('change', e => {
+document.getElementById('cb-random-lane')?.addEventListener('change', e => {
   fbSetRandomLane(state.gameId, e.target.checked);
 });
 
@@ -1423,6 +1422,8 @@ document.getElementById('cb-random-lane').addEventListener('change', e => {
   function resize() {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
+    canvas.style.width  = window.innerWidth  + 'px';
+    canvas.style.height = window.innerHeight + 'px';
   }
   resize();
   window.addEventListener('resize', resize);
