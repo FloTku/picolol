@@ -758,11 +758,12 @@ function handleInGame(players, game) {
 }
 
 async function fetchAndApplyStats(players) {
-  // Récupère les stats du dernier match pour chaque joueur qui a un Riot ID
   try {
-    const me = players.find(p => p.id === state.playerId);
-    if (!me || !me.riotId) {
-      // Pas de Riot ID → on passe directement en délibération manuelle
+    // 1. Récupère les PUUIDs de tous les joueurs qui ont un Riot ID
+    const playersWithRiot = players.filter(p => p.riotId && p.riotId.includes('#'));
+
+    if (!playersWithRiot.length) {
+      // Personne n'a de Riot ID → délibération manuelle
       if (state.isHost && !transitioning) {
         transitioning = true;
         clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
@@ -773,24 +774,22 @@ async function fetchAndApplyStats(players) {
       return;
     }
 
-    // Parse Riot ID
-    const [gameName, tagLine] = me.riotId.split('#');
-    if (!gameName || !tagLine) {
-      showError('Riot ID invalide — format attendu : Pseudo#TAG');
-      return;
-    }
+    // 2. On prend le 1er joueur avec Riot ID pour récupérer les stats du match
+    //    (tous les joueurs de la même partie auront le même matchId)
+    const anchor = playersWithRiot[0];
+    const [gameName, tagLine] = anchor.riotId.split('#');
 
-    // Récupère le PUUID si pas encore fait
-    let puuid = me.puuid;
+    // Récupère le PUUID si pas encore en base
+    let puuid = anchor.puuid;
     if (!puuid) {
       puuid = await getPuuid(gameName, tagLine, state.region);
-      await playerRef(state.gameId, state.playerId).update({ puuid });
+      await playerRef(state.gameId, anchor.id).update({ puuid });
     }
 
-    // Récupère les stats du dernier match
+    // 3. Récupère les stats du dernier match
     const stats = await getLastMatchStats(puuid, state.region);
 
-    if (!stats) {
+    if (!stats || !stats.length) {
       showError('Impossible de récupérer les stats. Passage en vote manuel.');
       if (state.isHost && !transitioning) {
         transitioning = true;
@@ -802,22 +801,34 @@ async function fetchAndApplyStats(players) {
       return;
     }
 
-    // Stocke les stats dans Firebase pour que l'hôte puisse calculer les verdicts
+    // 4. Résout les PUUIDs de tous les joueurs avec Riot ID
+    for (const p of playersWithRiot) {
+      if (!p.puuid) {
+        try {
+          const [gn, tl] = p.riotId.split('#');
+          const pid = await getPuuid(gn, tl, state.region);
+          await playerRef(state.gameId, p.id).update({ puuid: pid });
+          p.puuid = pid;
+        } catch (e) {
+          console.warn('PUUID introuvable pour', p.riotId);
+        }
+      }
+    }
+
+    // 5. Stocke les stats dans Firebase
     await gameRef(state.gameId).update({ matchStats: stats });
 
-    // L'hôte calcule les verdicts automatiques
+    // 6. L'hôte calcule les verdicts automatiques
     if (state.isHost && !transitioning) {
       transitioning = true;
       clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
 
-      const snap = await gameRef(state.gameId).once('value');
-      const g    = snap.val();
-      const freshPlayers = playersArray(g.players);
-      const matchStats   = g.matchStats || [];
+      const snap         = await gameRef(state.gameId).once('value');
+      const freshPlayers = playersArray(snap.val().players);
+      const matchStats   = snap.val().matchStats || [];
 
-      // Applique les verdicts automatiques pour les rôles stats
       await Promise.all(freshPlayers.map(async p => {
-        if (!p.role) return;
+        if (!p.role || !p.puuid) return;
         const autoResult = checkObjectifAuto(p.role, matchStats, p.puuid);
         if (autoResult !== null) {
           await fbSetSuccess(state.gameId, p.id, autoResult);
@@ -831,7 +842,9 @@ async function fetchAndApplyStats(players) {
 
   } catch (err) {
     console.error('Erreur stats Riot :', err);
-    showError('Erreur API Riot : ' + (err.message || err.code || err));
+    const btn = document.querySelector('#vote-container-ingame button');
+    if (btn) { btn.disabled = false; btn.textContent = '🏁 La partie est terminée'; }
+    showError('Erreur API Riot : ' + (err.message || JSON.stringify(err)));
   }
 }
 function handleDeliberation(players, dVotes) {
