@@ -844,7 +844,6 @@ function handleInGame(players, game) {
   const recapEl = document.getElementById('ingame-recap');
   if (recapEl && me) {
     recapEl.innerHTML = '';
-    // Champion
     if (me.champion) {
       const img = document.createElement('img');
       img.src       = championImageUrl(me.champion.name);
@@ -855,9 +854,7 @@ function handleInGame(players, game) {
     }
     const info = document.createElement('div');
     info.className = 'ingame-recap-info';
-    if (me.champion) {
-      info.innerHTML += `<span class="ingame-recap-champion">${LANE_ICONS[me.champion.lane] || ''} ${me.champion.name}</span>`;
-    }
+    if (me.champion) info.innerHTML += `<span class="ingame-recap-champion">${LANE_ICONS[me.champion.lane] || ''} ${me.champion.name}</span>`;
     if (me.role) {
       info.innerHTML += `<span class="ingame-recap-role">🎭 ${me.role.nom}</span>`;
       info.innerHTML += `<span class="ingame-recap-obj">${me.role.objectif}</span>`;
@@ -866,11 +863,14 @@ function handleInGame(players, game) {
     recapEl.style.display = 'flex';
   }
 
-  // Timer
-  if (!ingameStartTime) ingameStartTime = Date.now();
+  // Timer synchronisé via Firebase
+  const startTime = game.gameStartTime || Date.now();
+  if (!game.gameStartTime && state.isHost) {
+    gameRef(state.gameId).update({ gameStartTime: startTime });
+  }
   if (!ingameTimerInterval) {
     ingameTimerInterval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - ingameStartTime) / 1000);
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
       const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
       const s = String(elapsed % 60).padStart(2, '0');
       const el = document.getElementById('ingame-timer');
@@ -885,8 +885,13 @@ function handleInGame(players, game) {
     btn.textContent = '🏁 La partie est terminée';
     btn.addEventListener('click', async () => {
       btn.disabled    = true;
-      btn.textContent = '⏳ Récupération des stats…';
-      await fetchAndApplyStats(players);
+      btn.textContent = '⏳ En attente…';
+      if (state.isHost) {
+        await fetchAndApplyStats(players);
+      } else {
+        // Non-hôte : juste signaler, c'est l'hôte qui déclenche
+        btn.textContent = '✅ Signal envoyé';
+      }
     });
     container.appendChild(btn);
   }
@@ -1421,7 +1426,7 @@ async function restartGame(immunity = {}) {
     verdictVotes: {}, replayVotes: {}, revealIndex: 0,
     usedChampions: [], randomLane: false,
     usedBonus: {}, bonusEvent: null,
-    immunity: newImmunity,
+    immunity: newImmunity, gameStartTime: null,
   });
 }
 
