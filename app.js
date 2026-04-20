@@ -1002,16 +1002,35 @@ function handleDeliberation(players, dVotes) {
 function renderDeliberation(players, dVotes) {
   const c = document.getElementById('deliberation-list');
   if (!c) return;
-  c.innerHTML = '';
 
   const myVotes = dVotes[state.playerId] || {};
-  players.filter(p => p.id !== state.playerId).forEach(target => {
-    const voted = myVotes[target.id];
-    const item  = document.createElement('div');
+  const others  = players.filter(p => p.id !== state.playerId);
+
+  others.forEach(target => {
+    const voted   = myVotes[target.id];
+    const itemId  = 'delib-item-' + target.id;
+    let   item    = document.getElementById(itemId);
+
+    // Si l'item existe déjà et que le vote n'est pas encore confirmé → ne pas reconstruire
+    if (item) {
+      const btn = item.querySelector('button');
+      const sel = item.querySelector('select');
+      // Si le vote vient d'être confirmé par Firebase → désactiver
+      if (voted && sel && !sel.disabled) {
+        sel.disabled = true;
+        sel.value    = voted;
+        if (btn) { btn.disabled = true; btn.textContent = '✅ Voté'; }
+      }
+      return; // on ne reconstruit pas l'item
+    }
+
+    // Première construction de l'item
+    item = document.createElement('div');
     item.className = 'deliberation-item';
+    item.id        = itemId;
 
     const label = document.createElement('p');
-    label.className = 'deliberation-name';
+    label.className   = 'deliberation-name';
     label.textContent = target.name;
 
     const sel = document.createElement('select');
@@ -1034,6 +1053,7 @@ function renderDeliberation(players, dVotes) {
     c.appendChild(item);
   });
 
+  // Compteur uniquement
   const done = players.filter(voter => {
     const v = dVotes[voter.id] || {};
     return players.filter(p => p.id !== voter.id).every(t => v[t.id]);
