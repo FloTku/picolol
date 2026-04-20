@@ -1208,20 +1208,22 @@ async function applyVerdictAndLaunchEffects(players, vVotes) {
 // ========================
 function handleEffects(players, rVotes, immunity, usedBonus) {
   showView('effects');
-  renderEffects(players, rVotes, immunity, usedBonus);
+  renderEffects(players, rVotes, immunity || {}, usedBonus || {});
   if (allReplayVoted(rVotes, players) && state.isHost && !transitioning) {
     transitioning = true;
-    restartGame(immunity).finally(() => { transitioning = false; });
+    restartGame(immunity || {}).finally(() => { transitioning = false; });
   }
 }
 
 function renderEffects(players, rVotes, immunity, usedBonus) {
+  immunity   = immunity   || {};
+  usedBonus  = usedBonus  || {};
   setVisible('host-effects-panel', false);
   setVisible('player-effect-panel', true);
   const me        = players.find(p => p.id === state.playerId);
   const myEffect  = me && me.effect ? me.effect : null;
-  const hasUsed   = (usedBonus || {})[state.playerId];
-  const isImmune  = (immunity  || {})[state.playerId] > 0;
+  const hasUsed   = !!usedBonus[state.playerId];
+  const isImmune  = (immunity[state.playerId] || 0) > 0;
 
   renderMyEffect(myEffect, isImmune);
 
