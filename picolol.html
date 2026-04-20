@@ -227,15 +227,14 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
   <script>
     function sbGoTo(page) {
-  document.querySelectorAll(".sb-page").forEach(p => p.style.display = "none");
-  const t = document.getElementById("sb-page-" + page);
-  if(t) t.style.display = "flex";
-  // Construire le contenu au moment de la navigation
-  if(typeof buildSidebar === "function") buildSidebar();
-}
+      document.querySelectorAll(".sb-page").forEach(p => p.style.display = "none");
+      const t = document.getElementById("sb-page-" + page);
+      if(t) t.style.display = "flex";
+      if(typeof buildSidebar === "function") buildSidebar();
+    }
   </script>
-  <script src="app.js"></script>
 </body>
 </html>

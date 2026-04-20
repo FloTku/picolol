@@ -685,35 +685,22 @@ function sbGoTo(page) {
 function buildSidebar() {
   const rc = r => ({commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"})[RARITY_MAP[r]||"commun"];
 
-  // Rôles
   const rolesEl = document.getElementById("sb-roles-content");
-  if(rolesEl && (!rolesEl.dataset.built || !rolesEl.children.length)) {
-    rolesEl.dataset.built = "1";
+  if(rolesEl && typeof ROLES !== "undefined" && ROLES.length && !rolesEl.children.length) {
     rolesEl.innerHTML = ROLES.map(r =>
-      `<div class="sb-item">
-        <span class="sb-item-name">${r.nom}</span>
-        <span class="sb-item-desc">${r.objectif}</span>
-      </div>`
+      `<div class="sb-item"><span class="sb-item-name">${r.nom}</span><span class="sb-item-desc">${r.objectif}</span></div>`
     ).join("");
   }
 
-  // Bonus & Malus
   const effectsEl = document.getElementById("sb-effects-content");
-  if(effectsEl && (!effectsEl.dataset.built || !effectsEl.children.length)) {
-    effectsEl.dataset.built = "1";
+  if(effectsEl && typeof BONUS_POOL !== "undefined" && BONUS_POOL.length && !effectsEl.children.length) {
     let html = `<div class="sb-section-title">✨ Bonus (${BONUS_POOL.length})</div>`;
     html += BONUS_POOL.map(b =>
-      `<div class="sb-item">
-        <span class="sb-item-rarity" style="color:${rc(b.rarity)}">${b.rarity}</span>
-        <span class="sb-item-desc">${b.text}</span>
-      </div>`
+      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(b.rarity)}">${b.rarity}</span><span class="sb-item-desc">${b.text}</span></div>`
     ).join("");
     html += `<div class="sb-section-title" style="margin-top:1rem">💀 Malus (${MALUS_POOL.length})</div>`;
     html += MALUS_POOL.map(m =>
-      `<div class="sb-item">
-        <span class="sb-item-rarity" style="color:${rc(m.rarity)}">${m.rarity}</span>
-        <span class="sb-item-desc">${m.text}</span>
-      </div>`
+      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(m.rarity)}">${m.rarity}</span><span class="sb-item-desc">${m.text}</span></div>`
     ).join("");
     effectsEl.innerHTML = html;
   }
