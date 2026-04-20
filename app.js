@@ -1023,37 +1023,36 @@ function renderDeliberation(players, dVotes) {
   const myVotes = dVotes[state.playerId] || {};
   const others  = players.filter(p => p.id !== state.playerId);
 
+  // Sauvegarder les valeurs en cours de saisie avant de reconstruire
+  const pendingValues = {};
   others.forEach(target => {
-    const voted   = myVotes[target.id];
-    const itemId  = 'delib-item-' + target.id;
-    let   item    = document.getElementById(itemId);
+    const sel = document.getElementById('delib-sel-' + target.id);
+    if (sel && !sel.disabled && sel.value) pendingValues[target.id] = sel.value;
+  });
 
-    // Si l'item existe déjà et que le vote n'est pas encore confirmé → ne pas reconstruire
-    if (item) {
-      const btn = item.querySelector('button');
-      const sel = item.querySelector('select');
-      // Si le vote vient d'être confirmé par Firebase → désactiver
-      if (voted && sel && !sel.disabled) {
-        sel.disabled = true;
-        sel.value    = voted;
-        if (btn) { btn.disabled = true; btn.textContent = '✅ Voté'; }
-      }
-      return; // on ne reconstruit pas l'item
-    }
+  // Reconstruire proprement
+  c.innerHTML = '';
 
-    // Première construction de l'item
-    item = document.createElement('div');
+  others.forEach(target => {
+    const voted = myVotes[target.id];
+    const item  = document.createElement('div');
     item.className = 'deliberation-item';
-    item.id        = itemId;
 
     const label = document.createElement('p');
     label.className   = 'deliberation-name';
     label.textContent = target.name;
 
     const sel = document.createElement('select');
+    sel.id = 'delib-sel-' + target.id;
     sel.innerHTML = `<option value="">— Choisir un rôle —</option>` +
-      ROLES.map(r => `<option value="${r.nom}" ${voted === r.nom ? 'selected' : ''}>${r.nom}</option>`).join('');
-    if (voted) sel.disabled = true;
+      ROLES.map(r => `<option value="${r.nom}">${r.nom}</option>`).join('');
+
+    if (voted) {
+      sel.value    = voted;
+      sel.disabled = true;
+    } else if (pendingValues[target.id]) {
+      sel.value = pendingValues[target.id]; // restaurer la saisie en cours
+    }
 
     const btn = document.createElement('button');
     btn.className   = 'btn-confirm-vote';
@@ -1070,7 +1069,6 @@ function renderDeliberation(players, dVotes) {
     c.appendChild(item);
   });
 
-  // Compteur uniquement
   const done = players.filter(voter => {
     const v = dVotes[voter.id] || {};
     return players.filter(p => p.id !== voter.id).every(t => v[t.id]);
