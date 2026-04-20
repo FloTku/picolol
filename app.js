@@ -347,13 +347,12 @@ function onGameUpdate(game) {
       overlayShownPhase="effects";
       const me=players.find(p=>p.id===state.playerId);
       showEffectReveal(me&&me.effect?me.effect:null,()=>{
-        // Relire Firebase pour avoir les données fraîches
         gameRef(state.gameId).once("value").then(snap=>{
           if(!snap.exists())return;
           const g=snap.val();
-          // Si la phase a changé entre temps, laisser le routeur gérer
           if(g.phase!=="effects"){onGameUpdate(g);return;}
           showView("effects");
+          // Utiliser replayVotes FRAIS depuis Firebase (pas celui du snapshot précédent)
           renderEffects(playersArray(g.players),g.replayVotes||{},g.immunity||{},g.usedBonus||{});
         });
       });
@@ -572,7 +571,14 @@ async function applyVerdictAndLaunchEffects(players,vVotes) {
 //  PHASE EFFECTS
 // ========================
 function handleEffects(players,rVotes,immunity,usedBonus) {
-  showView("effects");renderEffects(players,rVotes,immunity,usedBonus);
+  showView("effects");
+  // Forcer reset du bouton rejouer — évite les résidus entre parties
+  const vc=document.getElementById("vote-container-effects");
+  if(vc&&!rVotes[state.playerId]){
+    const btn=vc.querySelector("button");
+    if(btn&&btn.disabled)vc.innerHTML="";
+  }
+  renderEffects(players,rVotes,immunity,usedBonus);
   if(allReplayVoted(rVotes,players)&&state.isHost&&!transitioning){transitioning=true;restartGame(immunity).finally(()=>{transitioning=false;});}
 }
 
@@ -581,8 +587,7 @@ function renderEffects(players,rVotes,immunity,usedBonus) {
   setVisible("host-effects-panel",false);setVisible("player-effect-panel",true);
   const me=players.find(p=>p.id===state.playerId);
   const myEffect=me?.effect||null;const hasUsed=!!usedBonus[state.playerId];const isImmune=(immunity[state.playerId]||0)>0;
-  renderMyEffect(myEffect,isImmune);
-  const actEl=document.getElementById("effects-actions");
+  renderMyEffect(myEffect,isImmune);  const actEl=document.getElementById("effects-actions");
   if(actEl){actEl.innerHTML="";
     if(myEffect&&myEffect.type==="bonus"&&!hasUsed){const txt=myEffect.description||"";
       if(txt.includes("voler le bonus")){const others=players.filter(p=>p.id!==state.playerId&&p.effect);if(others.length){const lbl=document.createElement("p");lbl.className="muted";lbl.textContent="Choisis qui voler :";actEl.appendChild(lbl);others.forEach(t=>{const btn=document.createElement("button");btn.className="btn-bonus-action";btn.textContent=`🦊 Voler ${t.name} (${t.effect?.rarity||"?"})`;btn.addEventListener("click",()=>{btn.disabled=true;fbStealBonus(state.gameId,state.playerId,t.id);});actEl.appendChild(btn);});}}
