@@ -609,11 +609,11 @@ function onGameUpdate(game) {
   const bonusEvent      = game.bonusEvent        || null;
   const phase           = game.phase;
 
-  // Retour lobby depuis effects
+  // Retour lobby depuis effects — reset complet
   if (phase === 'lobby' && currentPhase === 'effects') {
     currentPhase = null;
-    const stale = document.querySelector('.draw-overlay');
-    if (stale) stale.remove();
+    document.querySelectorAll('.draw-overlay').forEach(o => o.remove());
+    return; // on ne traite pas ce cycle, le prochain update sera propre
   }
 
   // Overlays au changement de phase (une seule fois)
@@ -1417,15 +1417,25 @@ async function restartGame(immunity = {}) {
   transitioning = false;
   clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
 
-  // Reset du DOM de la phase in_game pour la prochaine partie
-  const container = document.getElementById('vote-container-ingame');
-  if (container) container.innerHTML = '';
+  // Ferme tout overlay résiduel
+  document.querySelectorAll('.draw-overlay').forEach(o => o.remove());
+
+  // Reset complet du DOM entre les parties
+  const resetEls = [
+    'vote-container-ingame',
+    'deliberation-list',
+    'effects-actions',
+    'effects-others',
+    'vote-container-effects',
+    'reveal-container',
+    'verdict-list',
+  ];
+  resetEls.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
   const recap = document.getElementById('ingame-recap');
   if (recap) { recap.innerHTML = ''; recap.style.display = 'none'; }
-
-  // Reset du DOM de la délibération
-  const deliberationList = document.getElementById('deliberation-list');
-  if (deliberationList) deliberationList.innerHTML = '';
   const snap   = await gameRef(state.gameId).once('value');
   const g      = snap.val();
   const fresh  = playersArray(g.players);
