@@ -132,56 +132,82 @@
   <!-- SIDEBAR PICOLOL -->
   <div id="sidebar" class="sidebar">
     <div class="sidebar-inner">
-      <div class="sidebar-header">
-        <a href="index.html" class="sidebar-back">← Accueil</a>
-        <button class="sidebar-close-btn" id="btn-sidebar-close">✕</button>
-      </div>
-      <div class="sidebar-logo">
-        <span class="sidebar-game-name">🎮 Picolol</span>
-        <span class="sidebar-game-sub">League of Legends</span>
-      </div>
-      <nav class="sidebar-nav">
 
-        <div class="sidebar-cat">
-          <button class="sidebar-cat-btn" onclick="toggleCat('cat-rules',this)">
-            <span>📖 Règles du jeu</span><span class="sidebar-chevron">▾</span>
+      <!-- PAGE MENU PRINCIPAL -->
+      <div class="sb-page" id="sb-page-menu">
+        <div class="sidebar-header">
+          <a href="index.html" class="sidebar-back">← Accueil</a>
+          <button class="sidebar-close-btn" id="btn-sidebar-close">✕</button>
+        </div>
+        <div class="sidebar-logo">
+          <span class="sidebar-game-name">🎮 Picolol</span>
+          <span class="sidebar-game-sub">League of Legends</span>
+        </div>
+        <nav class="sidebar-nav">
+          <button class="sidebar-nav-btn" onclick="sbGoTo('rules')">
+            <span>📖 Règles du jeu</span><span class="sb-arrow">›</span>
           </button>
-          <div class="sidebar-cat-content" id="cat-rules" style="display:none">
-            <div class="rules-text">
-              <p>Chaque joueur reçoit un <strong>rôle secret</strong> avec un objectif pendant la partie LoL.</p>
-              <br/>
-              <p>En <strong>délibération</strong>, vous devinez le rôle de chaque autre joueur.</p>
-              <p>✅ Bonne réponse = <span class="pts-badge">+1 pt</span></p>
-              <br/>
-              <p>Au <strong>verdict</strong>, l\'équipe vote si chaque joueur a réussi son objectif.</p>
-              <p>✅ Objectif réussi = <span class="pts-badge">+2 pts</span> + bonus</p>
-              <p>❌ Objectif raté = malus</p>
-            </div>
+          <button class="sidebar-nav-btn" onclick="sbGoTo('roles')">
+            <span>🎭 Rôles</span><span class="sb-arrow">›</span>
+          </button>
+          <button class="sidebar-nav-btn" onclick="sbGoTo('effects')">
+            <span>✨💀 Bonus & Malus</span><span class="sb-arrow">›</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- PAGE RÈGLES -->
+      <div class="sb-page" id="sb-page-rules" style="display:none">
+        <div class="sb-page-header">
+          <button class="sb-back-btn" onclick="sbGoTo('menu')">← Retour</button>
+          <span class="sb-page-title">📖 Règles</span>
+        </div>
+        <div class="sb-page-content">
+          <div class="rules-text">
+            <p>Chaque joueur reçoit un <strong>rôle secret</strong> avec un objectif à accomplir pendant la partie LoL.</p>
+            <div class="rules-divider"></div>
+            <p><strong>🎭 Distribution</strong></p>
+            <p>Au lancement, chaque joueur voit son champion (si activé) puis son rôle secret en overlay. Les rôles restent secrets jusqu'au reveal.</p>
+            <div class="rules-divider"></div>
+            <p><strong>⚔️ Pendant la partie</strong></p>
+            <p>Jouez votre partie LoL normalement tout en accomplissant votre objectif secret.</p>
+            <div class="rules-divider"></div>
+            <p><strong>🗳️ Délibération</strong></p>
+            <p>Après la partie, chacun vote secrètement pour deviner le rôle de chaque autre joueur.</p>
+            <p>✅ Bonne réponse = <span class="pts-badge">+1 pt</span></p>
+            <div class="rules-divider"></div>
+            <p><strong>🔍 Reveal</strong></p>
+            <p>L'hôte dévoile les rôles un par un de façon dramatique.</p>
+            <div class="rules-divider"></div>
+            <p><strong>⚖️ Verdict</strong></p>
+            <p>L'équipe vote si chaque joueur a réussi son objectif. Certains verdicts sont automatiques via l'API Riot.</p>
+            <p>✅ Objectif réussi = <span class="pts-badge">+2 pts</span> + bonus</p>
+            <p>❌ Objectif raté = malus</p>
+            <div class="rules-divider"></div>
+            <p><strong>🎁 Effets</strong></p>
+            <p>Les bonus et malus sont tirés selon la rareté (Commun → Légendaire). Certains bonus sont interactifs et s'utilisent sur le site.</p>
           </div>
         </div>
+      </div>
 
-        <div class="sidebar-cat">
-          <button class="sidebar-cat-btn" onclick="toggleCat('cat-roles',this)">
-            <span>🎭 Rôles <span class="sidebar-count" id="roles-count"></span></span><span class="sidebar-chevron">▾</span>
-          </button>
-          <div class="sidebar-cat-content" id="cat-roles" style="display:none"></div>
+      <!-- PAGE RÔLES -->
+      <div class="sb-page" id="sb-page-roles" style="display:none">
+        <div class="sb-page-header">
+          <button class="sb-back-btn" onclick="sbGoTo('menu')">← Retour</button>
+          <span class="sb-page-title">🎭 Rôles</span>
         </div>
+        <div class="sb-page-content" id="sb-roles-content"></div>
+      </div>
 
-        <div class="sidebar-cat">
-          <button class="sidebar-cat-btn" onclick="toggleCat('cat-bonus',this)">
-            <span>✨ Bonus <span class="sidebar-count" id="bonus-count"></span></span><span class="sidebar-chevron">▾</span>
-          </button>
-          <div class="sidebar-cat-content" id="cat-bonus" style="display:none"></div>
+      <!-- PAGE BONUS & MALUS -->
+      <div class="sb-page" id="sb-page-effects" style="display:none">
+        <div class="sb-page-header">
+          <button class="sb-back-btn" onclick="sbGoTo('menu')">← Retour</button>
+          <span class="sb-page-title">✨💀 Bonus & Malus</span>
         </div>
+        <div class="sb-page-content" id="sb-effects-content"></div>
+      </div>
 
-        <div class="sidebar-cat">
-          <button class="sidebar-cat-btn" onclick="toggleCat('cat-malus',this)">
-            <span>💀 Malus <span class="sidebar-count" id="malus-count"></span></span><span class="sidebar-chevron">▾</span>
-          </button>
-          <div class="sidebar-cat-content" id="cat-malus" style="display:none"></div>
-        </div>
-
-      </nav>
     </div>
   </div>
   <div id="sidebar-backdrop" class="sidebar-backdrop"></div>

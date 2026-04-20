@@ -674,51 +674,53 @@ function closeSidebar() {
   document.getElementById("sidebar")?.classList.remove("open");
   document.getElementById("sidebar-backdrop")?.classList.remove("open");
 }
-function toggleCat(id, btn) {
-  const el = document.getElementById(id); if(!el) return;
-  const open = el.style.display !== "none";
-  el.style.display = open ? "none" : "block";
-  const chev = btn?.querySelector(".sidebar-chevron");
-  if(chev) chev.textContent = open ? "▾" : "▴";
+
+function sbGoTo(page) {
+  // Cacher toutes les pages
+  document.querySelectorAll(".sb-page").forEach(p => p.style.display = "none");
+  // Afficher la page cible
+  const target = document.getElementById("sb-page-" + page);
+  if(target) target.style.display = "flex";
 }
+
 function buildSidebar() {
   const rc = r => ({commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"})[RARITY_MAP[r]||"commun"];
 
   // Rôles
-  const rolesEl = document.getElementById("cat-roles");
-  const rolesCt = document.getElementById("roles-count");
+  const rolesEl = document.getElementById("sb-roles-content");
   if(rolesEl && !rolesEl.dataset.built) {
     rolesEl.dataset.built = "1";
-    if(rolesCt) rolesCt.textContent = `(${ROLES.length})`;
     rolesEl.innerHTML = ROLES.map(r =>
-      `<div class="sb-item"><span class="sb-item-name">${r.nom}</span><span class="sb-item-desc">${r.objectif}</span></div>`
+      `<div class="sb-item">
+        <span class="sb-item-name">${r.nom}</span>
+        <span class="sb-item-desc">${r.objectif}</span>
+      </div>`
     ).join("");
   }
 
-  // Bonus
-  const bonusEl = document.getElementById("cat-bonus");
-  const bonusCt = document.getElementById("bonus-count");
-  if(bonusEl && !bonusEl.dataset.built) {
-    bonusEl.dataset.built = "1";
-    if(bonusCt) bonusCt.textContent = `(${BONUS_POOL.length})`;
-    bonusEl.innerHTML = BONUS_POOL.map(b =>
-      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(b.rarity)}">${b.rarity}</span><span class="sb-item-desc">${b.text}</span></div>`
+  // Bonus & Malus
+  const effectsEl = document.getElementById("sb-effects-content");
+  if(effectsEl && !effectsEl.dataset.built) {
+    effectsEl.dataset.built = "1";
+    let html = `<div class="sb-section-title">✨ Bonus (${BONUS_POOL.length})</div>`;
+    html += BONUS_POOL.map(b =>
+      `<div class="sb-item">
+        <span class="sb-item-rarity" style="color:${rc(b.rarity)}">${b.rarity}</span>
+        <span class="sb-item-desc">${b.text}</span>
+      </div>`
     ).join("");
-  }
-
-  // Malus
-  const malusEl = document.getElementById("cat-malus");
-  const malusCt = document.getElementById("malus-count");
-  if(malusEl && !malusEl.dataset.built) {
-    malusEl.dataset.built = "1";
-    if(malusCt) malusCt.textContent = `(${MALUS_POOL.length})`;
-    malusEl.innerHTML = MALUS_POOL.map(m =>
-      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(m.rarity)}">${m.rarity}</span><span class="sb-item-desc">${m.text}</span></div>`
+    html += `<div class="sb-section-title" style="margin-top:1rem">💀 Malus (${MALUS_POOL.length})</div>`;
+    html += MALUS_POOL.map(m =>
+      `<div class="sb-item">
+        <span class="sb-item-rarity" style="color:${rc(m.rarity)}">${m.rarity}</span>
+        <span class="sb-item-desc">${m.text}</span>
+      </div>`
     ).join("");
+    effectsEl.innerHTML = html;
   }
 }
 
-// Conserver openRulesPanel/closeRulesPanel comme alias pour la compatibilité
+// Alias compatibilité
 function openRulesPanel()  { openSidebar(); }
 function closeRulesPanel() { closeSidebar(); }
 
