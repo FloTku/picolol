@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Picolol — Picogames</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Canvas de fond animé — Summoner's Rift -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- HOME -->
+  <div id="view-home" class="view">
+    <h1>🎮 Picolol</h1>
+    <div class="input-group">
+      <input id="input-host-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
+      <input id="input-host-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
+      <button id="btn-create">Créer une partie</button>
+    </div>
+    <div class="separator">ou</div>
+    <div class="input-group">
+      <input id="input-code" type="text" placeholder="Code de partie" maxlength="6" autocomplete="off" inputmode="text" style="text-transform:uppercase" />
+      <input id="input-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
+      <input id="input-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
+      <button id="btn-join">Rejoindre</button>
+    </div>
+    <button id="btn-rules-home" class="btn-rules-inline" style="display:none"></button>
+  </div>
+
+
+  <!-- LOBBY -->
+  <div id="view-lobby" class="view" style="display:none">
+    <h2>Lobby</h2>
+    <div class="game-code-box">Code : <strong id="display-code">------</strong></div>
+
+    <!-- Options hôte (injectées par JS) -->
+    <div id="host-champion-controls" style="display:none">
+      <label class="champion-mode-label">
+        <input type="checkbox" id="cb-champion-mode" />
+        🎲 Champions aléatoires
+      </label>
+      <label class="champion-mode-label" id="cb-random-lane-wrap" style="display:none">
+        <input type="checkbox" id="cb-random-lane" />
+        🗺️ Postes aléatoires
+      </label>
+    </div>
+
+    <div id="previous-effect-container" style="display:none"></div>
+    <ul id="player-list"></ul>
+    <div id="vote-container-lobby"></div>
+  </div>
+
+
+  <!-- IN GAME — en attente de fin de partie LoL -->
+  <div id="view-ingame" class="view" style="display:none">
+    <h2>Partie en cours</h2>
+    <!-- Rappel rôle + champion -->
+    <div id="ingame-recap" class="ingame-recap" style="display:none"></div>
+    <div class="ingame-status">
+      <div class="ingame-icon">⚔️</div>
+      <p class="ingame-label">La partie est lancée !</p>
+      <p class="muted">Revenez ici dès que la partie est terminée.</p>
+      <div id="ingame-timer" class="ingame-timer">00:00</div>
+    </div>
+    <div id="ingame-stats-list" class="ingame-stats"></div>
+    <div id="vote-container-ingame"></div>
+  </div>
+
+
+  <!-- ROLES -->
+  <div id="view-roles" class="view" style="display:none">
+    <h2>Ton rôle</h2>
+    <!-- Bloc champion (visible uniquement en mode champion) -->
+    <div id="role-champion-block" class="role-champion-block" style="display:none"></div>
+    <div id="player-role-panel" style="display:none">
+      <div class="role-card">
+        <h3 id="role-name">—</h3>
+        <p id="role-objective">—</p>
+      </div>
+    </div>
+    <div id="vote-container-roles"></div>
+    <div id="host-roles-panel" style="display:none"></div>
+  </div>
+
+
+  <!-- DÉLIBÉRATION -->
+  <div id="view-deliberation" class="view" style="display:none">
+    <h2>Délibération</h2>
+    <p class="muted" style="text-align:center">Qui a quel rôle selon toi ?</p>
+    <div id="deliberation-list"></div>
+    <p id="deliberation-counter" class="vote-count" style="margin-top:0.5rem"></p>
+  </div>
+
+
+  <!-- REVEAL -->
+  <div id="view-reveal" class="view" style="display:none">
+    <h2>Révélation</h2>
+    <div id="reveal-container"></div>
+  </div>
+
+
+  <!-- VERDICT -->
+  <div id="view-verdict" class="view" style="display:none">
+    <h2>Verdict</h2>
+    <p class="muted" style="margin-bottom:0.5rem">Chaque joueur a-t-il réussi son objectif ?</p>
+    <ul id="verdict-list"></ul>
+    <p id="verdict-counter" class="vote-count" style="margin-top:0.5rem"></p>
+  </div>
+
+
+  <!-- EFFECTS -->
+  <div id="view-effects" class="view" style="display:none">
+    <h2>Ton effet</h2>
+    <div id="player-effect-panel" style="display:none">
+      <div class="effect-card">
+        <span id="effect-type-badge">—</span>
+        <h3 id="effect-name">—</h3>
+        <p id="effect-description">—</p>
+      </div>
+    </div>
+    <!-- Actions bonus interactives -->
+    <div id="effects-actions"></div>
+    <!-- Effets des autres joueurs -->
+    <div id="effects-others" class="effects-others-list"></div>
+    <div id="vote-container-effects"></div>
+    <div id="host-effects-panel" style="display:none"></div>
+  </div>
+
+
+  <!-- SIDEBAR PICOLOL -->
+  <div id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+      <div class="sidebar-header">
+        <a href="index.html" class="sidebar-back">← Accueil</a>
+        <button class="sidebar-close-btn" id="btn-sidebar-close">✕</button>
+      </div>
+      <div class="sidebar-logo">
+        <span class="sidebar-game-name">🎮 Picolol</span>
+        <span class="sidebar-game-sub">League of Legends</span>
+      </div>
+      <nav class="sidebar-nav">
+
+        <div class="sidebar-cat">
+          <button class="sidebar-cat-btn" onclick="toggleCat('cat-rules',this)">
+            <span>📖 Règles du jeu</span><span class="sidebar-chevron">▾</span>
+          </button>
+          <div class="sidebar-cat-content" id="cat-rules" style="display:none">
+            <div class="rules-text">
+              <p>Chaque joueur reçoit un <strong>rôle secret</strong> avec un objectif pendant la partie LoL.</p>
+              <br/>
+              <p>En <strong>délibération</strong>, vous devinez le rôle de chaque autre joueur.</p>
+              <p>✅ Bonne réponse = <span class="pts-badge">+1 pt</span></p>
+              <br/>
+              <p>Au <strong>verdict</strong>, l\'équipe vote si chaque joueur a réussi son objectif.</p>
+              <p>✅ Objectif réussi = <span class="pts-badge">+2 pts</span> + bonus</p>
+              <p>❌ Objectif raté = malus</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-cat">
+          <button class="sidebar-cat-btn" onclick="toggleCat('cat-roles',this)">
+            <span>🎭 Rôles <span class="sidebar-count" id="roles-count"></span></span><span class="sidebar-chevron">▾</span>
+          </button>
+          <div class="sidebar-cat-content" id="cat-roles" style="display:none"></div>
+        </div>
+
+        <div class="sidebar-cat">
+          <button class="sidebar-cat-btn" onclick="toggleCat('cat-bonus',this)">
+            <span>✨ Bonus <span class="sidebar-count" id="bonus-count"></span></span><span class="sidebar-chevron">▾</span>
+          </button>
+          <div class="sidebar-cat-content" id="cat-bonus" style="display:none"></div>
+        </div>
+
+        <div class="sidebar-cat">
+          <button class="sidebar-cat-btn" onclick="toggleCat('cat-malus',this)">
+            <span>💀 Malus <span class="sidebar-count" id="malus-count"></span></span><span class="sidebar-chevron">▾</span>
+          </button>
+          <div class="sidebar-cat-content" id="cat-malus" style="display:none"></div>
+        </div>
+
+      </nav>
+    </div>
+  </div>
+  <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+  <button id="btn-sidebar-open" class="sidebar-open-btn" title="Règles & Rôles">📖</button>
+
+  <!-- LEADERBOARD SIDEBAR (desktop) -->
+  <div id="leaderboard-sidebar" class="lb-sidebar"></div>
+
+  <!-- LEADERBOARD PANEL (mobile) -->
+  <div id="leaderboard-panel" class="lb-panel" aria-hidden="true">
+    <div id="leaderboard-panel-inner" class="lb-panel-inner"></div>
+  </div>
+  <button id="btn-lb-float" class="lb-float-btn" title="Classement">🏆</button>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

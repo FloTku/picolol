@@ -3,173 +3,130 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Picolol</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>Picogames</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #c9a84c; --gold-light: #f0d080; --gold-dark: #7a5c1e;
+      --bg-deep: #010208; --text: #d4c8a8; --text-dim: #8898b0;
+    }
+    body {
+      background: var(--bg-deep);
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    canvas#bg { position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; pointer-events:none; }
+    .wrap { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; gap:3rem; padding:2rem; }
+    .site-title { font-family:'Cinzel Decorative',serif; font-size:clamp(2rem,6vw,3.5rem); color:var(--gold-light); letter-spacing:6px; text-shadow:0 0 40px rgba(201,168,76,.5),0 0 80px rgba(201,168,76,.2); text-align:center; }
+    .site-sub { font-size:.9rem; letter-spacing:4px; color:var(--text-dim); text-transform:uppercase; text-align:center; margin-top:-.5rem; }
+    .divider { width:200px; height:1px; background:linear-gradient(90deg,transparent,var(--gold-dark),transparent); }
+    .cards { display:flex; gap:2rem; flex-wrap:wrap; justify-content:center; }
+    .card {
+      position:relative; width:260px; aspect-ratio:3/4; border-radius:16px; cursor:pointer;
+      overflow:hidden; border:1px solid rgba(201,168,76,.2);
+      transition:transform .3s cubic-bezier(.22,1,.36,1),border-color .3s,box-shadow .3s;
+      text-decoration:none;
+    }
+    .card:hover { transform:translateY(-8px) scale(1.02); border-color:rgba(201,168,76,.6); box-shadow:0 20px 60px rgba(0,0,0,.8),0 0 40px rgba(201,168,76,.15); }
+    .card--soon { cursor:not-allowed; opacity:.6; filter:grayscale(.3); }
+    .card--soon:hover { transform:none; box-shadow:none; border-color:rgba(201,168,76,.2); }
+    .card-bg { position:absolute; inset:0; z-index:0; }
+    .card-bg--lol { background:radial-gradient(ellipse at 50% 0%,rgba(0,200,255,.15) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(201,168,76,.2) 0%,transparent 50%),linear-gradient(160deg,#060e1f 0%,#020810 50%,#050a18 100%); }
+    .card-bg--val { background:radial-gradient(ellipse at 50% 0%,rgba(255,70,84,.15) 0%,transparent 60%),radial-gradient(ellipse at 20% 100%,rgba(255,70,84,.1) 0%,transparent 50%),linear-gradient(160deg,#160608 0%,#0d0305 50%,#160608 100%); }
+    .card-inner { position:relative; z-index:1; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1.5rem; padding:2rem; }
+    .card-inner svg { width:110px; height:110px; filter:drop-shadow(0 0 20px currentColor); }
+    .card-name { font-family:'Cinzel',serif; font-size:1.1rem; font-weight:700; letter-spacing:4px; text-transform:uppercase; text-align:center; }
+    .card-desc { font-size:.82rem; letter-spacing:1px; color:var(--text-dim); text-align:center; line-height:1.5; }
+    .card-badge { position:absolute; top:1rem; right:1rem; font-size:.65rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; padding:.3rem .6rem; border-radius:20px; z-index:2; }
+    .badge--play { background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.4); color:var(--gold-light); }
+    .badge--soon { background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); color:var(--text-dim); }
+    .card::after { content:''; position:absolute; top:-50%; left:-60%; width:40%; height:200%; background:linear-gradient(105deg,transparent 40%,rgba(255,255,255,.06) 50%,transparent 60%); transition:left .5s ease; z-index:3; pointer-events:none; }
+    .card:hover::after { left:120%; }
+    @media(max-width:600px) { .cards{gap:1.2rem;} .card{width:200px;} .card-inner svg{width:85px;height:85px;} }
+  </style>
 </head>
 <body>
-
-  <!-- Canvas de fond animé — Summoner's Rift -->
-  <canvas id="bg-canvas"></canvas>
-
-  <!-- HOME -->
-  <div id="view-home" class="view">
-    <h1>🎮 Picolol</h1>
-    <div class="input-group">
-      <input id="input-host-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
-      <input id="input-host-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
-      <button id="btn-create">Créer une partie</button>
-    </div>
-    <div class="separator">ou</div>
-    <div class="input-group">
-      <input id="input-code" type="text" placeholder="Code de partie" maxlength="6" autocomplete="off" inputmode="text" style="text-transform:uppercase" />
-      <input id="input-name" type="text" placeholder="Ton pseudo" maxlength="20" autocomplete="nickname" />
-      <input id="input-riot" type="text" placeholder="Riot ID (Pseudo#TAG)" maxlength="50" autocomplete="off" />
-      <button id="btn-join">Rejoindre</button>
-    </div>
-    <button id="btn-rules-home" class="btn-rules-inline">📖 Voir les rôles & effets</button>
+<canvas id="bg"></canvas>
+<div class="wrap">
+  <div>
+    <h1 class="site-title">Picogames</h1>
+    <p class="site-sub">Jeux de rôles pour soirées gaming</p>
   </div>
+  <div class="divider"></div>
+  <div class="cards">
 
+    <a href="picolol.html" class="card">
+      <div class="card-bg card-bg--lol"></div>
+      <span class="card-badge badge--play">Jouer</span>
+      <div class="card-inner">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" color="#c9a84c">
+          <polygon points="60,4 110,32 110,88 60,116 10,88 10,32" fill="none" stroke="#c9a84c" stroke-width="2" opacity=".8"/>
+          <polygon points="60,14 100,37 100,83 60,106 20,83 20,37" fill="rgba(201,168,76,.04)" stroke="rgba(201,168,76,.3)" stroke-width="1"/>
+          <line x1="60" y1="24" x2="60" y2="80" stroke="#c9a84c" stroke-width="3" stroke-linecap="round"/>
+          <polygon points="60,24 53,44 67,44" fill="#c9a84c"/>
+          <line x1="44" y1="60" x2="76" y2="60" stroke="#c9a84c" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="44" cy="60" r="3" fill="#c9a84c"/>
+          <circle cx="76" cy="60" r="3" fill="#c9a84c"/>
+          <circle cx="30" cy="44" r="2" fill="rgba(201,168,76,.5)"/>
+          <circle cx="90" cy="44" r="2" fill="rgba(201,168,76,.5)"/>
+          <circle cx="30" cy="76" r="2" fill="rgba(201,168,76,.5)"/>
+          <circle cx="90" cy="76" r="2" fill="rgba(201,168,76,.5)"/>
+        </svg>
+        <div>
+          <div class="card-name" style="color:#c9a84c">Picolol</div>
+          <div class="card-desc">Rôles secrets &amp; trahisons<br/>League of Legends</div>
+        </div>
+      </div>
+    </a>
 
-  <!-- LOBBY -->
-  <div id="view-lobby" class="view" style="display:none">
-    <h2>Lobby</h2>
-    <div class="game-code-box">Code : <strong id="display-code">------</strong></div>
-
-    <!-- Options hôte (injectées par JS) -->
-    <div id="host-champion-controls" style="display:none">
-      <label class="champion-mode-label">
-        <input type="checkbox" id="cb-champion-mode" />
-        🎲 Champions aléatoires
-      </label>
-      <label class="champion-mode-label" id="cb-random-lane-wrap" style="display:none">
-        <input type="checkbox" id="cb-random-lane" />
-        🗺️ Postes aléatoires
-      </label>
-    </div>
-
-    <div id="previous-effect-container" style="display:none"></div>
-    <ul id="player-list"></ul>
-    <div id="vote-container-lobby"></div>
-  </div>
-
-
-  <!-- IN GAME — en attente de fin de partie LoL -->
-  <div id="view-ingame" class="view" style="display:none">
-    <h2>Partie en cours</h2>
-    <!-- Rappel rôle + champion -->
-    <div id="ingame-recap" class="ingame-recap" style="display:none"></div>
-    <div class="ingame-status">
-      <div class="ingame-icon">⚔️</div>
-      <p class="ingame-label">La partie est lancée !</p>
-      <p class="muted">Revenez ici dès que la partie est terminée.</p>
-      <div id="ingame-timer" class="ingame-timer">00:00</div>
-    </div>
-    <div id="ingame-stats-list" class="ingame-stats"></div>
-    <div id="vote-container-ingame"></div>
-  </div>
-
-
-  <!-- ROLES -->
-  <div id="view-roles" class="view" style="display:none">
-    <h2>Ton rôle</h2>
-    <!-- Bloc champion (visible uniquement en mode champion) -->
-    <div id="role-champion-block" class="role-champion-block" style="display:none"></div>
-    <div id="player-role-panel" style="display:none">
-      <div class="role-card">
-        <h3 id="role-name">—</h3>
-        <p id="role-objective">—</p>
+    <div class="card card--soon">
+      <div class="card-bg card-bg--val"></div>
+      <span class="card-badge badge--soon">Bientôt</span>
+      <div class="card-inner">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" color="#ff4654">
+          <polygon points="60,6 114,60 60,114 6,60" fill="none" stroke="#ff4654" stroke-width="2" opacity=".8"/>
+          <polygon points="60,18 102,60 60,102 18,60" fill="rgba(255,70,84,.04)" stroke="rgba(255,70,84,.3)" stroke-width="1"/>
+          <circle cx="60" cy="60" r="16" fill="none" stroke="#ff4654" stroke-width="2"/>
+          <circle cx="60" cy="60" r="5" fill="#ff4654"/>
+          <line x1="60" y1="36" x2="60" y2="50" stroke="#ff4654" stroke-width="2" stroke-linecap="round"/>
+          <line x1="60" y1="70" x2="60" y2="84" stroke="#ff4654" stroke-width="2" stroke-linecap="round"/>
+          <line x1="36" y1="60" x2="50" y2="60" stroke="#ff4654" stroke-width="2" stroke-linecap="round"/>
+          <line x1="70" y1="60" x2="84" y2="60" stroke="#ff4654" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="60" cy="20" r="2.5" fill="rgba(255,70,84,.6)"/>
+          <circle cx="100" cy="60" r="2.5" fill="rgba(255,70,84,.6)"/>
+          <circle cx="60" cy="100" r="2.5" fill="rgba(255,70,84,.6)"/>
+          <circle cx="20" cy="60" r="2.5" fill="rgba(255,70,84,.6)"/>
+        </svg>
+        <div>
+          <div class="card-name" style="color:#ff4654">Picoval</div>
+          <div class="card-desc">Rôles secrets &amp; stratégie<br/>Valorant</div>
+        </div>
       </div>
     </div>
-    <div id="vote-container-roles"></div>
-    <div id="host-roles-panel" style="display:none"></div>
+
   </div>
+</div>
 
-
-  <!-- DÉLIBÉRATION -->
-  <div id="view-deliberation" class="view" style="display:none">
-    <h2>Délibération</h2>
-    <p class="muted" style="text-align:center">Qui a quel rôle selon toi ?</p>
-    <div id="deliberation-list"></div>
-    <p id="deliberation-counter" class="vote-count" style="margin-top:0.5rem"></p>
-  </div>
-
-
-  <!-- REVEAL -->
-  <div id="view-reveal" class="view" style="display:none">
-    <h2>Révélation</h2>
-    <div id="reveal-container"></div>
-  </div>
-
-
-  <!-- VERDICT -->
-  <div id="view-verdict" class="view" style="display:none">
-    <h2>Verdict</h2>
-    <p class="muted" style="margin-bottom:0.5rem">Chaque joueur a-t-il réussi son objectif ?</p>
-    <ul id="verdict-list"></ul>
-    <p id="verdict-counter" class="vote-count" style="margin-top:0.5rem"></p>
-  </div>
-
-
-  <!-- EFFECTS -->
-  <div id="view-effects" class="view" style="display:none">
-    <h2>Ton effet</h2>
-    <div id="player-effect-panel" style="display:none">
-      <div class="effect-card">
-        <span id="effect-type-badge">—</span>
-        <h3 id="effect-name">—</h3>
-        <p id="effect-description">—</p>
-      </div>
-    </div>
-    <!-- Actions bonus interactives -->
-    <div id="effects-actions"></div>
-    <!-- Effets des autres joueurs -->
-    <div id="effects-others" class="effects-others-list"></div>
-    <div id="vote-container-effects"></div>
-    <div id="host-effects-panel" style="display:none"></div>
-  </div>
-
-
-  <!-- SOMMAIRE — panel glissant -->
-  <div id="rules-panel" class="rules-panel" aria-hidden="true">
-    <div class="rules-panel-inner">
-      <button id="btn-rules-close" class="rules-close">✕</button>
-
-      <h2 class="rules-title">Sommaire</h2>
-
-      <!-- RÔLES -->
-      <section class="rules-section">
-        <h3 class="rules-section-title">🎭 Rôles</h3>
-        <div id="rules-roles-list" class="rules-list"></div>
-      </section>
-
-      <!-- BONUS -->
-      <section class="rules-section">
-        <h3 class="rules-section-title">✨ Bonus <span class="rules-subtitle">(objectif réussi)</span></h3>
-        <div id="rules-bonus-list" class="rules-list"></div>
-      </section>
-
-      <!-- MALUS -->
-      <section class="rules-section">
-        <h3 class="rules-section-title">💀 Malus <span class="rules-subtitle">(objectif raté)</span></h3>
-        <div id="rules-malus-list" class="rules-list"></div>
-      </section>
-    </div>
-  </div>
-
-  <!-- LEADERBOARD SIDEBAR (desktop) -->
-  <div id="leaderboard-sidebar" class="lb-sidebar"></div>
-
-  <!-- LEADERBOARD PANEL (mobile) -->
-  <div id="leaderboard-panel" class="lb-panel" aria-hidden="true">
-    <div id="leaderboard-panel-inner" class="lb-panel-inner"></div>
-  </div>
-  <button id="btn-lb-float" class="lb-float-btn" title="Classement">🏆</button>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="firebase-config.js"></script>
-  <script src="app.js"></script>
+<script>
+(function(){
+  const canvas=document.getElementById("bg"),ctx=canvas.getContext("2d");
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;canvas.style.width=window.innerWidth+"px";canvas.style.height=window.innerHeight+"px";}
+  resize();window.addEventListener("resize",resize);
+  const P=[[201,168,76],[255,70,84],[60,120,255],[0,200,255]];
+  function rgba(c,a){return "rgba("+c[0]+","+c[1]+","+c[2]+","+a+")";}
+  class Orb{constructor(){this.reset();}reset(){this.x=Math.random()*canvas.width;this.y=Math.random()*canvas.height;this.r=Math.random()*3+1;this.vx=(Math.random()-.5)*.4;this.vy=(Math.random()-.5)*.4;this.a=Math.random()*.35+.05;this.p=Math.random()*Math.PI*2;this.ps=Math.random()*.02+.005;this.c=P[Math.floor(Math.random()*P.length)];}update(){this.x+=this.vx;this.y+=this.vy;this.p+=this.ps;if(this.x<-10||this.x>canvas.width+10||this.y<-10||this.y>canvas.height+10)this.reset();}draw(){const a=this.a*(.7+.3*Math.sin(this.p));ctx.save();ctx.globalAlpha=a;const g=ctx.createRadialGradient(this.x,this.y,0,this.x,this.y,this.r*6);g.addColorStop(0,rgba(this.c,.9));g.addColorStop(.4,rgba(this.c,.3));g.addColorStop(1,rgba(this.c,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(this.x,this.y,this.r*6,0,Math.PI*2);ctx.fill();ctx.restore();}}
+  class Dot{constructor(){this.reset(true);}reset(i){this.x=Math.random()*canvas.width;this.y=i?Math.random()*canvas.height:canvas.height+10;this.vy=-(Math.random()*.5+.1);this.vx=(Math.random()-.5)*.2;this.s=Math.random()*2+.5;this.a=Math.random()*.4+.05;this.p=Math.random()*Math.PI*2;this.c=P[Math.floor(Math.random()*P.length)];}update(){this.x+=this.vx;this.y+=this.vy;this.p+=.01;if(this.y<-10)this.reset(false);}draw(){const a=this.a*(.7+.3*Math.sin(this.p));ctx.save();ctx.globalAlpha=a;ctx.fillStyle=rgba(this.c,1);ctx.beginPath();ctx.arc(this.x,this.y,this.s,0,Math.PI*2);ctx.fill();ctx.restore();}}
+  const orbs=Array.from({length:35},()=>new Orb()),dots=Array.from({length:60},()=>new Dot());
+  function links(){for(let i=0;i<orbs.length;i++)for(let j=i+1;j<orbs.length;j++){const dx=orbs[i].x-orbs[j].x,dy=orbs[i].y-orbs[j].y,d=Math.sqrt(dx*dx+dy*dy);if(d<130){ctx.save();ctx.globalAlpha=(1-d/130)*.06;ctx.strokeStyle=rgba([0,200,255],1);ctx.lineWidth=.5;ctx.beginPath();ctx.moveTo(orbs[i].x,orbs[i].y);ctx.lineTo(orbs[j].x,orbs[j].y);ctx.stroke();ctx.restore();}}}
+  function draw(){const W=canvas.width,H=canvas.height;ctx.clearRect(0,0,W,H);const bg=ctx.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#050a18");bg.addColorStop(.5,"#030508");bg.addColorStop(1,"#080305");ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);const gl=ctx.createRadialGradient(0,H*.5,0,0,H*.5,H*.6);gl.addColorStop(0,"rgba(201,168,76,.08)");gl.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);const gv=ctx.createRadialGradient(W,H*.5,0,W,H*.5,H*.6);gv.addColorStop(0,"rgba(255,70,84,.08)");gv.addColorStop(1,"rgba(0,0,0,0)");ctx.fillStyle=gv;ctx.fillRect(0,0,W,H);const vg=ctx.createRadialGradient(W*.5,H*.5,H*.15,W*.5,H*.5,H*.85);vg.addColorStop(0,"rgba(0,0,0,0)");vg.addColorStop(1,"rgba(1,2,8,.8)");ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);orbs.forEach(o=>{o.update();o.draw();});links();dots.forEach(d=>{d.update();d.draw();});requestAnimationFrame(draw);}
+  draw();
+})();
+</script>
 </body>
 </html>

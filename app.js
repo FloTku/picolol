@@ -663,29 +663,74 @@ function renderVoteButton(phase,votes,players,label) {
 }
 
 // ========================
-//  SOMMAIRE
+//  SIDEBAR
 // ========================
-function openRulesPanel() { const p=document.getElementById("rules-panel");if(p){p.classList.add("open");buildRulesPanel();} }
-function closeRulesPanel(){ document.getElementById("rules-panel")?.classList.remove("open"); }
-function buildRulesPanel() {
-  const c=document.getElementById("rules-content");if(!c||c.dataset.built)return;c.dataset.built="1";
-  const rc=r=>({commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"})[RARITY_MAP[r]||"commun"];
-  let html=`<h3 class="rules-section-title">🎭 Rôles (${ROLES.length})</h3>`;
-  ROLES.forEach(r=>{html+=`<div class="rules-role-item"><span class="rules-role-name">${r.nom}</span><span class="rules-role-obj">${r.objectif}</span></div>`;});
-  html+=`<h3 class="rules-section-title" style="margin-top:1.5rem">✨ Bonus (${BONUS_POOL.length})</h3>`;
-  BONUS_POOL.forEach(b=>{html+=`<div class="rules-effect-item"><span style="color:${rc(b.rarity)};font-size:.75rem;font-weight:700">${b.rarity}</span><span class="rules-effect-text">${b.text}</span></div>`;});
-  html+=`<h3 class="rules-section-title" style="margin-top:1.5rem">💀 Malus (${MALUS_POOL.length})</h3>`;
-  MALUS_POOL.forEach(m=>{html+=`<div class="rules-effect-item"><span style="color:${rc(m.rarity)};font-size:.75rem;font-weight:700">${m.rarity}</span><span class="rules-effect-text">${m.text}</span></div>`;});
-  c.innerHTML=html;
+function openSidebar() {
+  document.getElementById("sidebar")?.classList.add("open");
+  document.getElementById("sidebar-backdrop")?.classList.add("open");
+  buildSidebar();
 }
+function closeSidebar() {
+  document.getElementById("sidebar")?.classList.remove("open");
+  document.getElementById("sidebar-backdrop")?.classList.remove("open");
+}
+function toggleCat(id, btn) {
+  const el = document.getElementById(id); if(!el) return;
+  const open = el.style.display !== "none";
+  el.style.display = open ? "none" : "block";
+  const chev = btn?.querySelector(".sidebar-chevron");
+  if(chev) chev.textContent = open ? "▾" : "▴";
+}
+function buildSidebar() {
+  const rc = r => ({commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"})[RARITY_MAP[r]||"commun"];
+
+  // Rôles
+  const rolesEl = document.getElementById("cat-roles");
+  const rolesCt = document.getElementById("roles-count");
+  if(rolesEl && !rolesEl.dataset.built) {
+    rolesEl.dataset.built = "1";
+    if(rolesCt) rolesCt.textContent = `(${ROLES.length})`;
+    rolesEl.innerHTML = ROLES.map(r =>
+      `<div class="sb-item"><span class="sb-item-name">${r.nom}</span><span class="sb-item-desc">${r.objectif}</span></div>`
+    ).join("");
+  }
+
+  // Bonus
+  const bonusEl = document.getElementById("cat-bonus");
+  const bonusCt = document.getElementById("bonus-count");
+  if(bonusEl && !bonusEl.dataset.built) {
+    bonusEl.dataset.built = "1";
+    if(bonusCt) bonusCt.textContent = `(${BONUS_POOL.length})`;
+    bonusEl.innerHTML = BONUS_POOL.map(b =>
+      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(b.rarity)}">${b.rarity}</span><span class="sb-item-desc">${b.text}</span></div>`
+    ).join("");
+  }
+
+  // Malus
+  const malusEl = document.getElementById("cat-malus");
+  const malusCt = document.getElementById("malus-count");
+  if(malusEl && !malusEl.dataset.built) {
+    malusEl.dataset.built = "1";
+    if(malusCt) malusCt.textContent = `(${MALUS_POOL.length})`;
+    malusEl.innerHTML = MALUS_POOL.map(m =>
+      `<div class="sb-item"><span class="sb-item-rarity" style="color:${rc(m.rarity)}">${m.rarity}</span><span class="sb-item-desc">${m.text}</span></div>`
+    ).join("");
+  }
+}
+
+// Conserver openRulesPanel/closeRulesPanel comme alias pour la compatibilité
+function openRulesPanel()  { openSidebar(); }
+function closeRulesPanel() { closeSidebar(); }
 
 // ========================
 //  EVENT LISTENERS STATIQUES
 // ========================
-document.getElementById("btn-rules-home")?.addEventListener("click",openRulesPanel);
-document.getElementById("btn-rules-float")?.addEventListener("click",openRulesPanel);
-document.getElementById("btn-rules-close")?.addEventListener("click",closeRulesPanel);
-document.getElementById("rules-panel")?.addEventListener("click",e=>{if(e.target===document.getElementById("rules-panel"))closeRulesPanel();});
+document.getElementById("btn-rules-home")?.addEventListener("click",openSidebar);
+document.getElementById("btn-rules-float")?.addEventListener("click",openSidebar);
+document.getElementById("btn-rules-close")?.addEventListener("click",closeSidebar);
+document.getElementById("btn-sidebar-open")?.addEventListener("click",openSidebar);
+document.getElementById("btn-sidebar-close")?.addEventListener("click",closeSidebar);
+document.getElementById("sidebar-backdrop")?.addEventListener("click",closeSidebar);
 document.getElementById("btn-lb-float")?.addEventListener("click",openLeaderboardPanel);
 document.getElementById("leaderboard-panel")?.addEventListener("click",e=>{if(e.target===document.getElementById("leaderboard-panel"))closeLeaderboardPanel();});
 document.getElementById("cb-champion-mode")?.addEventListener("change",e=>{if(!state.gameId)return;fbSetChampionMode(state.gameId,e.target.checked);if(!e.target.checked)fbSetRandomLane(state.gameId,false);});

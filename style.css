@@ -1876,3 +1876,240 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* ========================
+   SIDEBAR PICOLOL
+======================== */
+.sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: min(320px, 88vw);
+  height: 100%;
+  z-index: 400;
+  transform: translateX(-100%);
+  transition: transform 0.35s cubic-bezier(0.22,1,0.36,1);
+}
+
+.sidebar.open { transform: translateX(0); }
+
+.sidebar-inner {
+  height: 100%;
+  background: var(--bg-deep);
+  border-right: 1px solid var(--border-gold);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dark) transparent;
+}
+
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 399;
+  background: rgba(1,2,8,0.7);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.sidebar-backdrop.open { opacity: 1; pointer-events: all; }
+
+/* Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem 0.8rem;
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+  flex-shrink: 0;
+}
+
+.sidebar-back {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.sidebar-back:hover { color: var(--gold-light); }
+
+.sidebar-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.3rem;
+  line-height: 1;
+  transition: color 0.2s;
+  letter-spacing: 0;
+}
+.sidebar-close-btn::before, .sidebar-close-btn::after { display: none; }
+.sidebar-close-btn:hover { color: var(--text); }
+
+/* Logo */
+.sidebar-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.2rem 1rem;
+  border-bottom: 1px solid rgba(201,168,76,0.1);
+  flex-shrink: 0;
+}
+.sidebar-game-name {
+  font-family: 'Cinzel', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 3px;
+}
+.sidebar-game-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 0.2rem;
+}
+
+/* Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: 0.5rem 0;
+  overflow-y: auto;
+}
+
+.sidebar-cat { border-bottom: 1px solid rgba(201,168,76,0.06); }
+
+.sidebar-cat-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.2rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+.sidebar-cat-btn::before, .sidebar-cat-btn::after { display: none; }
+.sidebar-cat-btn:hover { background: rgba(201,168,76,0.05); color: var(--gold-light); }
+
+.sidebar-chevron {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.sidebar-count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  font-weight: 400;
+  margin-left: 0.3rem;
+}
+
+.sidebar-cat-content {
+  padding: 0 1rem 1rem;
+}
+
+/* Items dans la sidebar */
+.sb-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.5rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.sb-item:last-child { border-bottom: none; }
+
+.sb-item-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  letter-spacing: 0.5px;
+}
+.sb-item-rarity {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.sb-item-desc {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.45;
+}
+
+/* Texte règles */
+.rules-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.6;
+  padding: 0.3rem 0.2rem;
+}
+.rules-text strong { color: var(--text); }
+.pts-badge {
+  display: inline-block;
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 4px;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--gold-light);
+  font-family: 'Cinzel', serif;
+}
+
+/* Bouton ouverture sidebar */
+.sidebar-open-btn {
+  position: fixed;
+  bottom: 4.5rem;
+  left: 1.2rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 1.1rem;
+  letter-spacing: 0;
+  z-index: 100;
+  border: 1px solid var(--gold-dark);
+  background: var(--bg-card);
+  color: var(--gold);
+  box-shadow: 0 0 16px rgba(201,168,76,0.2), 0 4px 16px rgba(0,0,0,0.6);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.sidebar-open-btn::before, .sidebar-open-btn::after { display: none; }
+.sidebar-open-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  box-shadow: 0 0 24px rgba(201,168,76,0.5);
+  transform: scale(1.1);
+}
+
+/* Sur desktop — sidebar toujours visible, pas de bouton */
+@media (min-width: 481px) {
+  .sidebar {
+    transform: translateX(0) !important;
+    width: 260px;
+    z-index: 10;
+  }
+  .sidebar-backdrop { display: none !important; }
+  .sidebar-open-btn { display: none; }
+  /* Décaler le contenu principal */
+  body > .view, body > #leaderboard-sidebar {
+    margin-left: 260px;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar { width: min(280px, 88vw); }
+}
