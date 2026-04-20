@@ -2269,3 +2269,26 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   color: var(--gold-light);
   font-family: 'Cinzel', serif;
 }
+
+/* Fix hauteur sidebar pages */
+.sidebar-inner {
+  height: 100%;
+  overflow: hidden;
+}
+
+.sb-page {
+  height: 100%;
+  overflow: hidden;
+}
+
+.sb-page-content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
