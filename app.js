@@ -1410,6 +1410,12 @@ async function restartGame(immunity = {}) {
   currentPhase  = null;
   transitioning = false;
   clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
+
+  // Reset du DOM de la phase in_game pour la prochaine partie
+  const container = document.getElementById('vote-container-ingame');
+  if (container) container.innerHTML = '';
+  const recap = document.getElementById('ingame-recap');
+  if (recap) { recap.innerHTML = ''; recap.style.display = 'none'; }
   const snap   = await gameRef(state.gameId).once('value');
   const g      = snap.val();
   const fresh  = playersArray(g.players);
