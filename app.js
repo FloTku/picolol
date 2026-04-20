@@ -347,9 +347,12 @@ function onGameUpdate(game) {
       overlayShownPhase="effects";
       const me=players.find(p=>p.id===state.playerId);
       showEffectReveal(me&&me.effect?me.effect:null,()=>{
+        // Relire Firebase pour avoir les données fraîches
         gameRef(state.gameId).once("value").then(snap=>{
-          if(!snap.exists()||snap.val().phase!=="effects")return;
+          if(!snap.exists())return;
           const g=snap.val();
+          // Si la phase a changé entre temps, laisser le routeur gérer
+          if(g.phase!=="effects"){onGameUpdate(g);return;}
           showView("effects");
           renderEffects(playersArray(g.players),g.replayVotes||{},g.immunity||{},g.usedBonus||{});
         });
@@ -590,10 +593,15 @@ function renderEffects(players,rVotes,immunity,usedBonus) {
   }
   const othersEl=document.getElementById("effects-others");
   if(othersEl){othersEl.innerHTML="";players.filter(p=>p.id!==state.playerId&&p.effect).forEach(p=>{const item=document.createElement("div");item.className="effect-other-item";item.innerHTML=`<span class="effect-other-name">${p.name}</span><span class="effect-other-type ${p.effect.type}">${p.effect.type==="bonus"?"✨":"💀"} ${p.effect.rarity}${(immunity[p.id]||0)>0?" 🛡️":""}</span>`;othersEl.appendChild(item);});}
+  // Bouton rejouer — ne reconstruire que si nécessaire
   const c=document.getElementById("vote-container-effects");if(!c)return;
   const count=Object.keys(rVotes).length;const voted=rVotes[state.playerId];
-  c.innerHTML=`<p class="vote-count">${count} / ${players.length} prêt${count>1?"s":""}</p><button id="btn-vote-effects" ${voted?"disabled":""}>${voted?"✅ Rejouer":"✔ Rejouer"}</button>`;
-  if(!voted)document.getElementById("btn-vote-effects")?.addEventListener("click",()=>fbVoteReplay(state.gameId,state.playerId));
+  // Mettre à jour le compteur sans reconstruire le bouton si le vote est déjà en place
+  let countEl=c.querySelector(".vote-count");
+  if(!countEl){c.innerHTML=`<p class="vote-count"></p><button id="btn-vote-effects">${voted?"✅ Rejouer":"✔ Rejouer"}</button>`;countEl=c.querySelector(".vote-count");if(!voted)document.getElementById("btn-vote-effects")?.addEventListener("click",()=>fbVoteReplay(state.gameId,state.playerId));}
+  countEl.textContent=`${count} / ${players.length} prêt${count>1?"s":""}`;
+  const btn=document.getElementById("btn-vote-effects");
+  if(btn&&voted&&!btn.disabled){btn.disabled=true;btn.textContent="✅ Rejouer";}
 }
 
 function renderMyEffect(effect,isImmune) {
