@@ -898,19 +898,17 @@ function handleInGame(players, game) {
 }
 
 async function fetchAndApplyStats(players) {
+  const btn = document.querySelector('#vote-container-ingame button');
+
   try {
-    // 1. Récupère les PUUIDs de tous les joueurs qui ont un Riot ID
     const playersWithRiot = players.filter(p => p.riotId && p.riotId.includes('#'));
 
+    // Pas de Riot ID → passage direct en délibération
     if (!playersWithRiot.length) {
-      // Personne n'a de Riot ID → délibération manuelle
-      if (state.isHost && !transitioning) {
-        transitioning = true;
-        clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
-        await fbResetVotes(state.gameId);
-        await fbSetPhase(state.gameId, 'deliberation');
-        transitioning = false;
-      }
+      clearInterval(ingameTimerInterval); ingameTimerInterval = null;
+      transitioning = false;
+      await fbResetVotes(state.gameId);
+      await fbSetPhase(state.gameId, 'deliberation');
       return;
     }
 
@@ -982,9 +980,14 @@ async function fetchAndApplyStats(players) {
 
   } catch (err) {
     console.error('Erreur stats Riot :', err);
-    const btn = document.querySelector('#vote-container-ingame button');
     if (btn) { btn.disabled = false; btn.textContent = '🏁 La partie est terminée'; }
     showError('Erreur API Riot : ' + (err.message || JSON.stringify(err)));
+    // Fallback — passe en délibération manuelle même si l'API plante
+    try {
+      clearInterval(ingameTimerInterval); ingameTimerInterval = null;
+      await fbResetVotes(state.gameId);
+      await fbSetPhase(state.gameId, 'deliberation');
+    } catch(e) { console.error('Fallback failed:', e); }
   }
 }
 function handleDeliberation(players, dVotes) {
@@ -1404,7 +1407,8 @@ function renderBonusEvent(event) {
 //  RESTART
 // ========================
 async function restartGame(immunity = {}) {
-  currentPhase = null;
+  currentPhase  = null;
+  transitioning = false;
   clearInterval(ingameTimerInterval); ingameTimerInterval = null; ingameStartTime = null;
   const snap   = await gameRef(state.gameId).once('value');
   const g      = snap.val();
