@@ -1422,6 +1422,10 @@ async function restartGame(immunity = {}) {
   if (container) container.innerHTML = '';
   const recap = document.getElementById('ingame-recap');
   if (recap) { recap.innerHTML = ''; recap.style.display = 'none'; }
+
+  // Reset du DOM de la délibération
+  const deliberationList = document.getElementById('deliberation-list');
+  if (deliberationList) deliberationList.innerHTML = '';
   const snap   = await gameRef(state.gameId).once('value');
   const g      = snap.val();
   const fresh  = playersArray(g.players);
