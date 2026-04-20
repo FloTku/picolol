@@ -1445,15 +1445,14 @@ async function restartGame(immunity = {}) {
   const imm    = g.immunity || {};
 
   await fbSavePreviousEffects(state.gameId, fresh);
-  await Promise.all(fresh.map(p => playerRef(state.gameId, p.id).update({ role: null, success: null, effect: null, lane: null, champion: null })));
 
-  // Décrémente l'immunité de chaque joueur immunisé
+  // Décrémente l'immunité
   const newImmunity = {};
   Object.entries(imm).forEach(([pid, count]) => {
     if (count > 1) newImmunity[pid] = count - 1;
-    // Si count === 1 → on le retire (immunité expirée)
   });
 
+  // Changer la phase EN PREMIER pour bloquer les overlays
   await gameRef(state.gameId).update({
     phase: 'lobby', votes: {}, deliberationVotes: {},
     verdictVotes: {}, replayVotes: {}, revealIndex: 0,
@@ -1461,6 +1460,9 @@ async function restartGame(immunity = {}) {
     usedBonus: {}, bonusEvent: null,
     immunity: newImmunity, gameStartTime: null,
   });
+
+  // Effacer les données joueurs APRÈS le changement de phase
+  await Promise.all(fresh.map(p => playerRef(state.gameId, p.id).update({ role: null, success: null, effect: null, lane: null, champion: null })));
 }
 
 // ========================
