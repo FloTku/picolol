@@ -878,22 +878,28 @@ function handleInGame(players, game) {
     }, 1000);
   }
 
-  // Bouton "Partie terminée"
+  // Bouton "Partie terminée" — uniquement pour l'hôte
   const container = document.getElementById('vote-container-ingame');
-  if (container && !container.querySelector('button')) {
-    const btn = document.createElement('button');
-    btn.textContent = '🏁 La partie est terminée';
-    btn.addEventListener('click', async () => {
-      btn.disabled    = true;
-      btn.textContent = '⏳ En attente…';
-      if (state.isHost) {
-        await fetchAndApplyStats(players);
-      } else {
-        // Non-hôte : juste signaler, c'est l'hôte qui déclenche
-        btn.textContent = '✅ Signal envoyé';
+  if (container) {
+    if (state.isHost) {
+      if (!container.querySelector('button')) {
+        const btn = document.createElement('button');
+        btn.textContent = '🏁 La partie est terminée';
+        btn.addEventListener('click', async () => {
+          btn.disabled    = true;
+          btn.textContent = '⏳ Récupération des stats…';
+          await fetchAndApplyStats(players);
+        });
+        container.appendChild(btn);
       }
-    });
-    container.appendChild(btn);
+    } else {
+      if (!container.querySelector('p')) {
+        const p = document.createElement('p');
+        p.className   = 'muted';
+        p.textContent = "En attente de l'hôte…";
+        container.appendChild(p);
+      }
+    }
   }
 }
 
