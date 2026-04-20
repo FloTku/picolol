@@ -596,11 +596,18 @@ function renderEffects(players,rVotes,immunity,usedBonus) {
   // Bouton rejouer — ne reconstruire que si nécessaire
   const c=document.getElementById("vote-container-effects");if(!c)return;
   const count=Object.keys(rVotes).length;const voted=rVotes[state.playerId];
-  // Mettre à jour le compteur sans reconstruire le bouton si le vote est déjà en place
   let countEl=c.querySelector(".vote-count");
-  if(!countEl){c.innerHTML=`<p class="vote-count"></p><button id="btn-vote-effects">${voted?"✅ Rejouer":"✔ Rejouer"}</button>`;countEl=c.querySelector(".vote-count");if(!voted)document.getElementById("btn-vote-effects")?.addEventListener("click",()=>fbVoteReplay(state.gameId,state.playerId));}
+  let btn=document.getElementById("btn-vote-effects");
+  // Si le bouton existe mais est désactivé alors que le joueur n'a pas voté → vider et reconstruire
+  if(btn&&btn.disabled&&!voted){c.innerHTML="";countEl=null;btn=null;}
+  if(!countEl){
+    c.innerHTML=`<p class="vote-count"></p><button id="btn-vote-effects">${voted?"✅ Rejouer":"✔ Rejouer"}</button>`;
+    countEl=c.querySelector(".vote-count");
+    btn=document.getElementById("btn-vote-effects");
+    if(btn&&voted)btn.disabled=true;
+    if(btn&&!voted)btn.addEventListener("click",()=>fbVoteReplay(state.gameId,state.playerId));
+  }
   countEl.textContent=`${count} / ${players.length} prêt${count>1?"s":""}`;
-  const btn=document.getElementById("btn-vote-effects");
   if(btn&&voted&&!btn.disabled){btn.disabled=true;btn.textContent="✅ Rejouer";}
 }
 
