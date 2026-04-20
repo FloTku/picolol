@@ -642,7 +642,13 @@ function onGameUpdate(game) {
           if (!snap.exists()) return;
           const g = snap.val();
           showView('effects');
-          renderEffects(playersArray(g.players), g.replayVotes || {});
+          setVisible('player-effect-panel', true);
+          renderEffects(
+            playersArray(g.players),
+            g.replayVotes || {},
+            g.immunity    || {},
+            g.usedBonus   || {}
+          );
         });
       });
       return;
@@ -1214,8 +1220,8 @@ function renderEffects(players, rVotes, immunity, usedBonus) {
   setVisible('player-effect-panel', true);
   const me        = players.find(p => p.id === state.playerId);
   const myEffect  = me && me.effect ? me.effect : null;
-  const hasUsed   = usedBonus[state.playerId];
-  const isImmune  = immunity[state.playerId] > 0;
+  const hasUsed   = (usedBonus || {})[state.playerId];
+  const isImmune  = (immunity  || {})[state.playerId] > 0;
 
   renderMyEffect(myEffect, isImmune);
 
