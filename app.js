@@ -609,18 +609,21 @@ function onGameUpdate(game) {
   const bonusEvent      = game.bonusEvent        || null;
   const phase           = game.phase;
 
-  // Retour lobby depuis effects — reset complet
+  // Retour lobby depuis effects — reset complet sans bloquer la suite
   if (phase === 'lobby' && currentPhase === 'effects') {
     currentPhase = null;
     document.querySelectorAll('.draw-overlay').forEach(o => o.remove());
-    return; // on ne traite pas ce cycle, le prochain update sera propre
+    // On continue — handleLobby sera appelé normalement
   }
 
   // Overlays au changement de phase (une seule fois)
+  // Ne pas déclencher d'overlay si on vient de restarted (currentPhase est null et phase est lobby)
+  const justRestarted = currentPhase === null && phase === 'lobby';
+
   if (phase !== currentPhase) {
     currentPhase = phase;
 
-    if (phase === 'roles' && !document.querySelector('.draw-overlay')) {
+    if (!justRestarted && phase === 'roles' && !document.querySelector('.draw-overlay')) {
       const me = players.find(p => p.id === state.playerId);
       if (me && me.role) {
         // Si mode champion : afficher champion d'abord, puis rôle
@@ -635,7 +638,7 @@ function onGameUpdate(game) {
       }
     }
 
-    if (phase === 'effects' && !document.querySelector('.draw-overlay')) {
+    if (!justRestarted && phase === 'effects' && !document.querySelector('.draw-overlay')) {
       const me = players.find(p => p.id === state.playerId);
       showEffectReveal(me && me.effect ? me.effect : null, () => {
         gameRef(state.gameId).once('value').then(snap => {
