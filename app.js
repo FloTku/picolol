@@ -324,6 +324,12 @@ function onGameUpdate(game) {
   if(bonusEvent&&bonusEvent.ts)renderBonusEvent(bonusEvent);
 
   // ── GESTION OVERLAY ─────────────────────────────
+  // Reset overlayShownPhase quand on repasse par lobby (entre deux parties)
+  if(phase==="lobby"&&(overlayShownPhase==="roles"||overlayShownPhase==="effects")) {
+    overlayShownPhase=null;
+    removeOverlay();
+  }
+
   if(phase!==currentPhase) {
     currentPhase=phase;
 
@@ -601,7 +607,7 @@ function renderMyEffect(effect,isImmune) {
 //  RESTART
 // ========================
 async function restartGame(immunity={}) {
-  transitioning=false;overlayShownPhase=null;currentPhase=null;lastBonusTs=0;
+  transitioning=false;currentPhase=null;lastBonusTs=0;
   clearInterval(ingameTimer);ingameTimer=null;removeOverlay();resetDom();
   const snap=await gameRef(state.gameId).once("value");const g=snap.val();
   const fresh=playersArray(g.players);const imm=g.immunity||{};
