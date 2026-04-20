@@ -668,7 +668,6 @@ function renderVoteButton(phase,votes,players,label) {
 function openSidebar() {
   document.getElementById("sidebar")?.classList.add("open");
   document.getElementById("sidebar-backdrop")?.classList.add("open");
-  buildSidebar();
 }
 function closeSidebar() {
   document.getElementById("sidebar")?.classList.remove("open");
