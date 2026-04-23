@@ -2391,3 +2391,64 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   backdrop-filter: blur(4px);
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
 }
+
+/* ========================
+   OVERLAY EFFET — CARTE CUSTOM V2
+======================== */
+.effect-card-custom {
+  width: min(300px, 80vw);
+  aspect-ratio: 3/4;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 1.2rem;
+  animation: cardFlip 0.8s cubic-bezier(0.22,1,0.36,1) both;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+  overflow: hidden;
+}
+
+.ecf-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ecf-icone {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(255,255,255,0.4));
+}
+
+.ecf-type {
+  font-family: 'Cinzel', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-shadow: 0 0 16px currentColor;
+}
+
+.ecf-rarity {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px currentColor;
+}
+
+.ecf-desc {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  line-height: 1.5;
+  background: rgba(0,0,0,0.6);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  backdrop-filter: blur(6px);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+  width: 100%;
+}

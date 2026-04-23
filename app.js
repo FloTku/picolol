@@ -182,24 +182,30 @@ function showEffectReveal(effect, cb) {
   if(!effect||!effect.description){if(cb)cb();return;}
   const isBonus = effect.type==="bonus";
   const rarKey  = RARITY_MAP[effect.rarity]||"commun";
-  const icone   = RARITY_ASSETS[rarKey]?.icone;
-  const carte   = isBonus ? BONUS_CARD_ASSETS[rarKey] : null; // malus cards à venir
-  const rc      = {commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"};
+  const rc      = {commun:"#ccc",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"};
   const color   = rc[rarKey];
 
+  const icone = `assets/icone${rarKey.charAt(0).toUpperCase()}${rarKey.slice(1).replace("legendaire","L").replace("epique","E").replace("rare","R").replace("commun","C")}.png`;
+  // Simplifier : mapping direct
+  const iconeMap = {commun:"assets/iconeC.png",rare:"assets/iconeR.png",epique:"assets/iconeE.png",legendaire:"assets/iconeL.png"};
+  const carteMap = {commun:"assets/cartebonusC.png",rare:"assets/cartebonusR.png",epique:"assets/cartebonusE.png",legendaire:"assets/cartebonusL.png"};
+
+  const iconeSrc = iconeMap[rarKey];
+  const carteSrc = isBonus ? carteMap[rarKey] : null; // cartes malus à venir
+
   playBurst(isBonus?BURST_COLORS.bonus:BURST_COLORS.malus);
-
   if(hasOverlay())return;
+
   const o=document.createElement("div"); o.className="draw-overlay";
-
-  const cardBg = carte
-    ? `background-image:url('${carte}');background-size:cover;background-position:center;`
-    : `background:${isBonus?"linear-gradient(160deg,#0a1a0a,#0d2b0d)":"linear-gradient(160deg,#1a0a0a,#2b0d0d)"};`;
-
   o.innerHTML=`
     <div class="draw-card-wrap">
-      <div class="effect-card-custom" style="${cardBg}">
-        <div class="effect-card-desc">${effect.description}</div>
+      <div class="effect-card-custom" style="background-image:url('${carteSrc||""}');background-size:cover;background-position:center;${!carteSrc?`background:linear-gradient(160deg,#1a0a0a,#2b0d0d);`:""}">
+        <div class="ecf-top">
+          <img class="ecf-icone" src="${iconeSrc}" alt="${effect.rarity}" onerror="this.style.display='none'"/>
+          <div class="ecf-type" style="color:${isBonus?"#4ade80":"#f87171"}">${isBonus?"✨ BONUS":"💀 MALUS"}</div>
+          <div class="ecf-rarity" style="color:${color}">${effect.rarity}</div>
+        </div>
+        <div class="ecf-desc">${effect.description}</div>
         <div class="draw-card-tap">Toucher pour continuer</div>
       </div>
     </div>`;
