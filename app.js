@@ -199,13 +199,6 @@ function showEffectReveal(effect, cb) {
   o.innerHTML=`
     <div class="draw-card-wrap">
       <div class="effect-card-custom" style="${cardBg}">
-        <div class="effect-card-icone">
-          ${icone ? `<img src="${icone}" alt="${effect.rarity}" onerror="this.style.display='none'"/>` : ""}
-        </div>
-        <div class="effect-card-title" style="color:${isBonus?"#4ade80":"#f87171"}">
-          ${isBonus?"Objectif réussi !":"Objectif raté…"}
-        </div>
-        <div class="effect-card-rarity" style="color:${color}">${effect.rarity||""}</div>
         <div class="effect-card-desc">${effect.description}</div>
         <div class="draw-card-tap">Toucher pour continuer</div>
       </div>

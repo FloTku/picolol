@@ -2355,3 +2355,39 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   align-items: center;
   text-shadow: 0 1px 4px rgba(0,0,0,0.8);
 }
+
+/* Fix positionnement texte sur carte custom */
+.effect-card-custom {
+  justify-content: space-between !important;
+  padding: 1.2rem 1.2rem 1.5rem !important;
+}
+.effect-card-custom .effect-card-icone {
+  width: 70px;
+  height: 70px;
+  margin-top: 0;
+}
+.effect-card-custom .effect-card-desc {
+  font-size: 0.92rem;
+  background: rgba(0,0,0,0.45);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  backdrop-filter: blur(4px);
+}
+
+/* Texte effet uniquement en bas de carte */
+.effect-card-custom {
+  justify-content: flex-end !important;
+  padding: 1rem 1.2rem 2rem !important;
+}
+.effect-card-custom .effect-card-desc {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: white;
+  text-align: center;
+  line-height: 1.5;
+  background: rgba(0,0,0,0.55);
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  backdrop-filter: blur(4px);
+  text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+}
