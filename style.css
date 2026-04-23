@@ -2452,3 +2452,26 @@ li:hover { background: var(--bg-hover); transform: translateX(3px); }
   text-shadow: 0 1px 4px rgba(0,0,0,0.9);
   width: 100%;
 }
+
+/* ========================
+   CARTE EFFET — AJUSTEMENTS
+======================== */
+.effect-card-custom {
+  width: min(340px, 85vw) !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem !important;
+  padding: 1.2rem 1.2rem 1rem !important;
+}
+
+.ecf-top {
+  gap: 0.3rem !important;
+}
+
+.ecf-icone {
+  width: 80px !important;
+  height: 80px !important;
+}
+
+.ecf-desc {
+  margin-top: auto !important;
+}
