@@ -164,12 +164,55 @@ function showChampionReveal(champion,cb) {
   o.addEventListener("pointerup",dismiss,{once:true});
 }
 
-function showEffectReveal(effect,cb) {
+// Mapping rareté → fichiers assets
+const RARITY_ASSETS = {
+  commun:     { icone: "assets/iconeC.png",  carte: null },  // carte malus à venir
+  rare:       { icone: "assets/iconeR.png",  carte: null },
+  epique:     { icone: "assets/iconeE.png",  carte: null },
+  legendaire: { icone: "assets/iconeL.png",  carte: null },
+};
+const BONUS_CARD_ASSETS = {
+  commun:     "assets/cartebonusC.png",
+  rare:       "assets/cartebonusR.png",
+  epique:     "assets/cartebonusE.png",
+  legendaire: "assets/cartebonusL.png",
+};
+
+function showEffectReveal(effect, cb) {
   if(!effect||!effect.description){if(cb)cb();return;}
-  const isBonus=effect.type==="bonus";
-  const rc={commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"};
+  const isBonus = effect.type==="bonus";
+  const rarKey  = RARITY_MAP[effect.rarity]||"commun";
+  const icone   = RARITY_ASSETS[rarKey]?.icone;
+  const carte   = isBonus ? BONUS_CARD_ASSETS[rarKey] : null; // malus cards à venir
+  const rc      = {commun:"#aaa",rare:"#60a5fa",epique:"#c084fc",legendaire:"#f59e0b"};
+  const color   = rc[rarKey];
+
   playBurst(isBonus?BURST_COLORS.bonus:BURST_COLORS.malus);
-  showDrawOverlay({icon:isBonus?ICONS.bonus:ICONS.malus,title:isBonus?"Objectif réussi !":"Objectif raté…",titleColor:isBonus?"#4ade80":"#f87171",subtitle:{text:effect.rarity||"",color:rc[RARITY_MAP[effect.rarity]||"commun"]},body:{text:effect.description,type:effect.type}},cb);
+
+  if(hasOverlay())return;
+  const o=document.createElement("div"); o.className="draw-overlay";
+
+  const cardBg = carte
+    ? `background-image:url('${carte}');background-size:cover;background-position:center;`
+    : `background:${isBonus?"linear-gradient(160deg,#0a1a0a,#0d2b0d)":"linear-gradient(160deg,#1a0a0a,#2b0d0d)"};`;
+
+  o.innerHTML=`
+    <div class="draw-card-wrap">
+      <div class="effect-card-custom" style="${cardBg}">
+        <div class="effect-card-icone">
+          ${icone ? `<img src="${icone}" alt="${effect.rarity}" onerror="this.style.display='none'"/>` : ""}
+        </div>
+        <div class="effect-card-title" style="color:${isBonus?"#4ade80":"#f87171"}">
+          ${isBonus?"Objectif réussi !":"Objectif raté…"}
+        </div>
+        <div class="effect-card-rarity" style="color:${color}">${effect.rarity||""}</div>
+        <div class="effect-card-desc">${effect.description}</div>
+        <div class="draw-card-tap">Toucher pour continuer</div>
+      </div>
+    </div>`;
+  document.body.appendChild(o);
+  function dismiss(){o.style.animation="fadeOut 0.25s ease both";setTimeout(()=>{o.remove();if(cb)cb();},240);}
+  o.addEventListener("pointerup",dismiss,{once:true});
 }
 
 function renderBonusEvent(event) {
