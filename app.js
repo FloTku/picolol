@@ -187,11 +187,18 @@ function showEffectReveal(effect, cb) {
 
   const icone = `assets/icone${rarKey.charAt(0).toUpperCase()}${rarKey.slice(1).replace("legendaire","L").replace("epique","E").replace("rare","R").replace("commun","C")}.png`;
   // Simplifier : mapping direct
-  const iconeMap = {commun:"assets/iconeC.png",rare:"assets/iconeR.png",epique:"assets/iconeE.png",legendaire:"assets/iconeL.png"};
-  const carteMap = {commun:"assets/cartebonusC.png",rare:"assets/cartebonusR.png",epique:"assets/cartebonusE.png",legendaire:"assets/cartebonusL.png"};
+  const iconeMap = {
+    bonus:  {commun:"assets/iconeC.png",    rare:"assets/iconeR.png",    epique:"assets/iconeE.png",    legendaire:"assets/iconeL.png"},
+    malus:  {commun:"assets/iconemalusC.png",rare:"assets/iconemalusR.png",epique:"assets/iconemalusE.png",legendaire:"assets/iconemalusL.png"},
+  };
+  const carteMap = {
+    bonus:  {commun:"assets/cartebonusC.png",rare:"assets/cartebonusR.png",epique:"assets/cartebonusE.png",legendaire:"assets/cartebonusL.png"},
+    malus:  {commun:"assets/CartemalusC.png", rare:"assets/CartemalusR.png", epique:"assets/cartemalusE.png", legendaire:"assets/CartemalusL.png"},
+  };
 
-  const iconeSrc = iconeMap[rarKey];
-  const carteSrc = isBonus ? carteMap[rarKey] : null; // cartes malus à venir
+  const type     = isBonus ? "bonus" : "malus";
+  const iconeSrc = iconeMap[type][rarKey];
+  const carteSrc = carteMap[type][rarKey];
 
   playBurst(isBonus?BURST_COLORS.bonus:BURST_COLORS.malus);
   if(hasOverlay())return;
